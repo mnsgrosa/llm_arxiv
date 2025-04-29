@@ -13,7 +13,7 @@ class PaperScraper:
             if page == 'lattest':
                 response = client.get(self.base_url + self.latest)
             elif page == 'trending':
-                client.get(self.base_url)
+                response = client.get(self.base_url)
             else:
                 logging.error(f'Invalid page: {page}')
                 return
