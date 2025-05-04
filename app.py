@@ -1,6 +1,6 @@
 import streamlit as st
-from agents.agent import LLMAgent
-
+from agents.agent import run
+from asyncio import run as asyncio_run
 
 if 'response' not in st.session_state:
     st.session_state.response = {}
@@ -16,8 +16,6 @@ if 'get_trending' not in st.session_state:
 
 if 'get_lattest' not in st.session_state:
     st.session_state.get_lattest = []
-
-agent = LLMAgent()
 
 st.set_page_config(page_title="LLM Papers with Code", page_icon=":books:", layout = 'wide')
 st.title("Agentic queries for papers with Code")
@@ -38,7 +36,7 @@ with st.form('input_prompt'):
 
 if submit:
     try:
-        response = agent.run(prompt)
+        response = run(prompt)
         st.write(f'Latest response from the prompt {response}')
     except Exception as e:
         st.error(f'Error retrieving the response: {e}')
