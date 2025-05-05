@@ -3,10 +3,13 @@ import logging
 import os
 import httpx
 import json
+import asyncio
+import websockets
 from google.adk.runners import Runner
 from google.adk.events import Event
 from google.adk.sessions import InMemorySessionService
 from google.adk.tools import FunctionTool
+from google.adk.models.lite_llm import LiteLlm
 from google.genai import types
 from scraper.paperscraper import PaperScraper
 from uuid import uuid4
@@ -64,7 +67,13 @@ POST = {
     }
 }
 
-def call_get_fastapi_endpoint(endpoint:str, query:str, n_results:int) -> Dict[str, Union[str, Dict[str, str]]]:
+async def connect_to_agent(prompt):
+    url = 'ws://localhost:8000/agent_ws'
+    async with websockets.connect(url) as agent_ws:
+        await agent_ws.send(prompt)
+        return await agent_ws.recv()
+
+async def call_get_fastapi_endpoint(endpoint:str, query:str, n_results:int) -> Dict[str, Union[str, Dict[str, str]]]:
     '''
     Calls FastAPI endpoints to either get papers.
 
@@ -92,11 +101,11 @@ def call_get_fastapi_endpoint(endpoint:str, query:str, n_results:int) -> Dict[st
     path = GET[endpoint].get('path')
     response = httpx.get(BASE_URL + path, params = Request(query = query, n_results = n_results).model_dump(), timeout = 600)
     try:
-        return {'data': response.json().get('papers')}
+        return {'data': response.json().get('papers'), 'endpoint_called': 'get'}
     except:
-        return {'error': 'invalid response'}
+        return {'data': 'invalid response'}
 
-def call_post_fastapi_endpoint(endpoint:str):
+async def call_post_fastapi_endpoint(endpoint:str):
     '''
     Calls FastAPI endpoints to either post papers to the latest papers db or the trending.
 
@@ -123,38 +132,77 @@ def call_post_fastapi_endpoint(endpoint:str):
     response = httpx.post(BASE_URL + path, timeout = 600)
 
     try:
-        return {'status': response.json().get('papers')}
+        return {'status': response.json().get('papers'), 'endpoint_called': 'post'}
     except:
-        return {'error': 'invalid response'}
+        return {'status': 'invalid response'}
 
 post_tool = FunctionTool(func = call_post_fastapi_endpoint)
 get_tool = FunctionTool(func = call_get_fastapi_endpoint)
 
-agent = Agent(
-        name="endpoint_scraper_agent",
-        model="gemini-2.0-flash-exp",
-        description=(
-            "Agent to manipulate my endpoint and return the papers stored at the chroma db"
-        ),
-        instruction=(
-            "You are a helpful data scientist researcher agent that can scrape papers from PapersWithCode and store them in a chroma db."
-        ),
-        tools=[post_tool, get_tool]
-    )
+api_interpreter = Agent(
+    model = LiteLlm(model = 'openrouter/meta-llama/llama-3-8b-instruct'),
+    name = 'api_interpreter',
+    description = 'Agent that will interpret if the user wants to post data to db or get',
+    instruction = 'You are a helpful agent that can interpret if the user wants to post data to db or get',
+    tools = [post_tool, get_tool]
+)
+
+researcher = Agent(
+    model = 'gemini-2.0-flash-exp',
+    name = 'ml_researcher',
+    description = 'Agent that can chat about the papers stored in the database',
+    instruction = 'You are a machine learning researcher that can chat about papers stored in the database',
+    tools = []
+)
+
+router = Agent(
+    model = LiteLlm(model= 'openrouter/mistralai/mistral-7b-instruct'),
+    name = 'router',
+    description = 'Agent to route the request to the correct action, api manipulation or chat about the data',
+    instruction = '''
+        You are an agent that has the role of calling other agents to perform the task prompted by the user.
+        1. the first agent is the api_interpreter, he will manipulate the database api whenver prompted.       
+        api_interpreter goal:
+            Use api_interpreter whenever the user refers to populate the database in specific paperwithcode page(or get papers from the site it might look similar to get from the db but might mean to post to the db),
+            if the user doesnt provide the specific topic and isnt clear if it is a query populate the db
+            if intended to post at the latest database the endpoint parameter should be 'post_lattest_papers' and trending 'post_trending_papers'
+            (e.g., 'i want the papers from latest', 'post papers from trending') -> whenever something similar happers this is a post method call
+            get papers from the api that manages the database
+            if intended to get at the latest database the endpoint parameter should be 'get_lattest_papers' and trending 'get_trending_papers',
+            query should be the topic that the user is interested in and n_results should be the number of papers that the user wants to get
+            (e.g., 'i want the 3 latest from reinforcment learning', 'i want the 6 trending papers about computer vision')
+        2. the second agent is the researcher, he will chat about the papers stored in the database
+        researcher goal:
+            use the websocket so the user chats about the paper he got from a query
+            IMPORTANT: When using the researcher agent, always include the phrase "researcher: chat about paper" in your response
+
+        and use the researcher agent whenever the user makes a question about a paper to answer the user questions
+        do not perform any other actions
+    ''',
+    sub_agents = [api_interpreter, researcher]
+)
 
 runner = Runner(
-            agent = agent,
-            app_name = APP_NAME,
-            session_service = session_service
+        agent = router,
+        app_name = APP_NAME,
+        session_service = session_service   
 )
 
 
-def run(query):
+async def run(query):
     content = types.Content(role='user', parts=[types.Part(text=query)])
-    events = runner.run(user_id=USER_ID, session_id=SESSION_ID, new_message=content)
+    events = runner.run_async(user_id=USER_ID, session_id=SESSION_ID, new_message=content)
 
-    for event in events:
-        if event.is_final_response():
+    final_response = 'No final response captured'
+    async for event in events:
+        if event.is_final_response() and event.content and event.content.parts:
             final_response = event.content.parts[0].text
+            if 'researcher' in final_response.lower() or 'chat about paper' in final_response.lower():
+                websocket_response = await connect_to_agent(final_response)
+                yield websocket_response
+            else:
+                yield final_response
             print("Agent Response: ", final_response)
-            return final_response
+    
+    if final_response == 'No final response captured':
+        yield final_response

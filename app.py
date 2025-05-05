@@ -1,7 +1,8 @@
 import streamlit as st
 from agents.agent import run
-from asyncio import run as asyncio_run
+import asyncio
 
+# Initialize session state variables
 if 'response' not in st.session_state:
     st.session_state.response = {}
 
@@ -17,7 +18,16 @@ if 'get_trending' not in st.session_state:
 if 'get_lattest' not in st.session_state:
     st.session_state.get_lattest = []
 
-st.set_page_config(page_title="LLM Papers with Code", page_icon=":books:", layout = 'wide')
+if 'history' not in st.session_state:
+    st.session_state.history = {}
+
+if 'messages' not in st.session_state:
+    st.session_state.messages = []
+
+def chat(prompt):
+    return run(prompt)
+
+st.set_page_config(page_title="LLM Papers with Code", page_icon=":books:", layout='wide')
 st.title("Agentic queries for papers with Code")
 
 st.markdown('''# How to use the agentic paper scraper
@@ -30,35 +40,28 @@ st.markdown('''# How to use the agentic paper scraper
 '''
 )
 
-with st.form('input_prompt'):
-    prompt = st.text_input('Input your prompt')
-    submit = st.form_submit_button('Submit prompt')
+# Display chat history
+for message in st.session_state.messages:
+    with st.chat_message(message['role']):
+        st.markdown(message['content'])
 
-if submit:
-    try:
-        response = run(prompt)
-        st.write(f'Latest response from the prompt {response}')
-    except Exception as e:
-        st.error(f'Error retrieving the response: {e}')
+# Chat input
+if prompt := st.chat_input("What is up?"):
+    # Add user message to chat history
+    with st.chat_message('user'):
+        st.markdown(prompt)
+        st.session_state.messages.append({'role': 'user', 'content': prompt})
 
-if st.session_state.response:
-    data = response.get('data')
-    endpoint = response.get('endpoint_called')
-    if endpoint['method'] == 'POST':
-        if endpoint['action'] == 'post_trending_papers':
-            st.session_state.trending = data.get('message')
-            st.write('Trending papers added successfully')
-            st.write(st.session_state.trending)
-        elif endpoint['action'] == 'post_lattest_papers':
-            st.session_state.lattest = data.get('message')
-            st.write('Lattest papers added successfully')
-            st.write(st.session_state.lattest)
-    if endpoint['method'] == 'GET':
-        if endpoint['action'] == 'get_trending_papers':
-            st.session_state.get_trending = data.get('papers')
-            st.write('Trending papers retrieved successfully')
-            st.write(st.session_state.get_trending)
-        elif endpoint['action'] == 'get_lattest_papers':
-            st.session_state.get_lattest = data.get('papers')
-            st.write('Lattest papers retrieved successfully')
-            st.write(st.session_state.get_lattest)
+    # Display assistant response with streaming
+    with st.chat_message('assistant'):
+        response_stream = chat(prompt)
+        response = st.write_stream(response_stream).get('data')
+        st.session_state.messages.append({'role': 'assistant', 'content': response})
+
+# Sidebar
+with st.sidebar:
+    st.markdown('## Find specifics of the chat')
+    
+    # Add clear chat button
+    if st.button("Clear Chat"):
+        st.session_state.messages = []
