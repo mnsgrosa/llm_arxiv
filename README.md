@@ -1,6 +1,15 @@
 # LLM Papers with Code
 
-A project that scrapes and retrieves papers from PapersWithCode, allowing users to search for related papers using natural language queries.
+A project that scrapes and retrieves papers from PapersWithCode, allowing users to search for related papers using natural language queries through an agentic interface.
+
+## Project Overview
+
+This application consists of:
+
+1. A FastAPI backend that handles paper scraping and database operations
+2. A Streamlit frontend for user interaction
+3. An agent-based system using Google ADK for natural language processing
+4. ChromaDB for vector storage and semantic search
 
 ## Environment Setup
 
@@ -17,52 +26,89 @@ touch .env
 2. Add the following environment variables to the `.env` file:
 
 ```
-# Hugging Face API Token
-HF_TOKEN=your_huggingface_token_here
+# Whether you want to use the vertexai or not, by default it is False
+GOOGLE_GENAI_USE_VERTEXAI = False
+
+# OpenRouter API Token (for LiteLLM)
+OPENROUTER_API_KEY=your_openrouter_api_key_here
+
+# Google API Key (for Gemini models)
+GOOGLE_API_KEY=your_google_api_key_here
 ```
 
-3. Replace `your_huggingface_token_here` with your actual Hugging Face API token.
+3. Replace the placeholder values with your actual API keys.
 
-### Getting a Hugging Face API Token
+### Getting API Keys
 
-1. Create an account on [Hugging Face](https://huggingface.co/) if you don't have one.
-2. Go to your profile settings and navigate to the "Access Tokens" section.
-3. Create a new token with appropriate permissions.
-4. Copy the token and paste it in your `.env` file.
+1. **OpenRouter API Key**: Sign up at [OpenRouter](https://openrouter.ai/) to get an API key for accessing various LLM models.
+2. **Google API Key**: Get a key from [Google AI Studio](https://makersuite.google.com/app/apikey) for Gemini model access.
 
-## Requirements
+## Installation
 
-The project uses the following main Python packages:
+### Prerequisites
 
-- **dotenv**: For loading environment variables
-- **smolagents**: For creating and managing LLM-powered agents
-- **chromadb**: For vector database functionality
-- **httpx**: For making HTTP requests
-- **BeautifulSoup4**: For web scraping
-- **uuid**: For generating unique identifiers
+- Python 3.10+
+- pip
 
-### Installing Requirements
+### Installing Dependencies
 
-To install all required packages, you can use:
+The project uses a requirements.txt file for dependency management:
 
 ```bash
-pip install python-dotenv smolagents chromadb httpx beautifulsoup4
+pip install -r requirements.txt
 ```
 
 ## Project Structure
 
-- `agents/`: Contains the LLM agent implementation
-- `db/`: Contains the ChromaDB client for vector database operations
+- `agents/`: Contains the agent implementation using Google ADK
+- `backend/`: FastAPI server implementation
+  - `main.py`: API endpoints for paper operations
+  - `schemas.py`: Pydantic models for request/response validation
+- `db/`: ChromaDB client for vector database operations
 - `scraper/`: Contains the PaperScraper for fetching papers from PapersWithCode
+- `app.py`: Streamlit frontend application
+
+## Running the Application
+
+1. Start the backend server:
+
+```bash
+cd backend
+uvicorn main:app --reload --port 8000
+```
+
+2. In a separate terminal, start the Streamlit frontend:
+
+```bash
+streamlit run app.py
+```
+
+3. Access the application at http://localhost:8501
 
 ## Usage
 
-The project allows you to:
+The application provides two main functionalities:
 
-1. Scrape trending and latest papers from PapersWithCode
-2. Store paper information in a vector database
-3. Query related papers using natural language
+1. **Adding Papers to Database**:
+   - You can add trending or latest papers from PapersWithCode to the database
+   - Example prompt: "Add the latest papers to the database" or "Get trending papers"
+
+2. **Querying Papers**:
+   - Search for papers by topic using natural language
+   - Example prompt: "Show me 5 papers about reinforcement learning" or "Find 3 trending papers on computer vision"
+
+3. **Chatting About Papers**:
+   - After retrieving papers, you can ask questions about them
+   - The researcher agent will provide information based on the paper content
+
+## API Endpoints
+
+- `POST /papers/post/trending`: Scrapes and adds trending papers to the database
+- `POST /papers/post/lattest`: Scrapes and adds latest papers to the database
+- `GET /papers/get/trending`: Retrieves trending papers based on a query
+- `GET /papers/get/lattest`: Retrieves latest papers based on a query
+- WebSocket endpoints for real-time agent communication
 
 ## Note
 
-This project is currently in development. Additional documentation will be added as the project evolves.
+This project is actively being developed. Features and documentation will be updated regularly.
