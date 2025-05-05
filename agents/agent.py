@@ -92,7 +92,7 @@ def call_get_fastapi_endpoint(endpoint:str, query:str, n_results:int) -> Dict[st
     path = GET[endpoint].get('path')
     response = httpx.get(BASE_URL + path, params = Request(query = query, n_results = n_results).model_dump(), timeout = 600)
     try:
-        return {'data': response.json()}
+        return {'data': response.json().get('papers')}
     except:
         return {'error': 'invalid response'}
 
@@ -123,7 +123,7 @@ def call_post_fastapi_endpoint(endpoint:str):
     response = httpx.post(BASE_URL + path, timeout = 600)
 
     try:
-        return {'status': response.json()}
+        return {'status': response.json().get('papers')}
     except:
         return {'error': 'invalid response'}
 
