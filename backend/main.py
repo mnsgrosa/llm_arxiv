@@ -21,7 +21,7 @@ def add_trending_papers(titles:List[Title]):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get('/papers/get/title')
+@app.get('/papers/get/titles')
 def get_trending_papers(title: Getter):
     try:
         titles = db_titles.query(title.query, title.n_results)
