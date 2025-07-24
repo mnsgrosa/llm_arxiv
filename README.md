@@ -1,68 +1,85 @@
 # LLM Papers with Code
 
-A project that scrapes and retrieves papers from PapersWithCode, allowing users to search for related papers using natural language queries.
+## Português Brasileiro
 
-## Environment Setup
+Um projeto que faz scraping e pega papers do PapersWithCode, permitindo que usuários busquem por papers relacionados usando consultas em linguagem natural.
 
-### Creating the .env File
 
-This project requires a `.env` file in the root directory with the following environment variables:
 
-1. Create a `.env` file in the project root:
+### Requisitos
 
-```bash
-touch .env
-```
+O projeto utiliza os seguintes pacotes principais do Python:
+- **prefect**: Para orquestrar as ferramentas de scraping
+- **chromadb**: Para funcionalidade de banco de dados vetorial
+- **Pydantic**: Para validação de dados
+- **FastAPI**: Para possibilitar o envio de dados para o banco
+- **httpx**: Para fazer requisições HTTP
+- **BeautifulSoup4**: Para web scraping
+- **uuid**: Para gerar identificadores únicos
 
-2. Add the following environment variables to the `.env` file:
+#### Instalando os Requisitos
 
-```
-# Hugging Face API Token
-HF_TOKEN=your_huggingface_token_here
-```
-
-3. Replace `your_huggingface_token_here` with your actual Hugging Face API token.
-
-### Getting a Hugging Face API Token
-
-1. Create an account on [Hugging Face](https://huggingface.co/) if you don't have one.
-2. Go to your profile settings and navigate to the "Access Tokens" section.
-3. Create a new token with appropriate permissions.
-4. Copy the token and paste it in your `.env` file.
-
-## Requirements
-
-The project uses the following main Python packages:
-
-- **dotenv**: For loading environment variables
-- **smolagents**: For creating and managing LLM-powered agents
-- **chromadb**: For vector database functionality
-- **httpx**: For making HTTP requests
-- **BeautifulSoup4**: For web scraping
-- **uuid**: For generating unique identifiers
-
-### Installing Requirements
-
-To install all required packages, you can use:
-
+Para instalar todos os pacotes necessários, você pode usar:
 ```bash
 pip install python-dotenv smolagents chromadb httpx beautifulsoup4
 ```
 
-## Project Structure
+### Estrutura do Projeto
 
-- `agents/`: Contains the LLM agent implementation
+- `backend/`: Contém as funcionalidades para poder enviar dados para o banco
+- `orchestrator/`: Contém a lógica para o agendamento das ferramentas de orquestração
+- `db/`: Contém o cliente ChromaDB para operações de banco de dados vetorial
+- `scraper/`: Contém o PaperScraper para buscar papers do PapersWithCode
+
+### Uso
+
+O projeto permite que você:
+1. Faça scraping de papers em tendência e mais recentes do PapersWithCode
+2. Armazene informações dos papers em um banco de dados vetorial
+3. Consulte papers relacionados usando linguagem natural
+
+### Nota
+
+Este projeto está atualmente em desenvolvimento. Documentação adicional será adicionada conforme o projeto evolui.
+
+---
+
+## English
+
+A project that scrapes and retrieves papers from PapersWithCode, allowing users to search for related papers using natural language queries.
+
+### Requirements
+
+The project uses the following main Python packages:
+- **prefect**: For the orchestrating the scraping tools
+- **chromadb**: For vector database functionality
+- **Pydantic**: For data validation
+- **FastAPI**: So it is possible to post the data to the db
+- **httpx**: For making HTTP requests
+- **BeautifulSoup4**: For web scraping
+- **uuid**: For generating unique identifiers
+
+#### Installing Requirements
+
+To install all required packages, you can use:
+```bash
+pip install python-dotenv smolagents chromadb httpx beautifulsoup4
+```
+
+### Project Structure
+
+- `backend/`: Contains the features so it can post to the db
+- `orchestrator/`: Contains the logic for the schedule of orchestration tools
 - `db/`: Contains the ChromaDB client for vector database operations
 - `scraper/`: Contains the PaperScraper for fetching papers from PapersWithCode
 
-## Usage
+### Usage
 
 The project allows you to:
-
 1. Scrape trending and latest papers from PapersWithCode
 2. Store paper information in a vector database
 3. Query related papers using natural language
 
-## Note
+### Note
 
 This project is currently in development. Additional documentation will be added as the project evolves.
