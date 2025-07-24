@@ -54,7 +54,7 @@ def post_abstracts(abstracts: List[Abstract]):
 
 
 @flow(log_prints = True)
-def main_flow():
+def scraping_flow():
     latest = scrape_papers(selected_page = 'latest')
     trending = scrape_papers(selected_page = 'trending')
 
