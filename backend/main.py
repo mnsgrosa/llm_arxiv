@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from typing import List, Dict, Optional
 from fastapi.responses import JSONResponse
-from scraper.paperscraper import PaperScraper
+from schemas import Title, Abstract, Getter
 from db.chroma import DBClient
 from backend.schemas import Request
 from uuid import uuid4
@@ -9,41 +9,39 @@ import json
 
 app = FastAPI()
 scraper = PaperScraper()
-db_trending = DBClient('/tmp/chroma/trending')
-db_lattest = DBClient('/tmp/chroma/lattest')
+db_titles = DBClient('/tmp/chroma/titles')
+db_abstracts = DBClient('/tmp/chroma/abstracts')
 
-@app.post('/papers/post/trending')
-def add_trending_papers():
+@app.post('/papers/post/titles')
+def add_trending_papers(titles:List[Title]):
     try:
-        trending = scraper.returnable_text(page = 'trending')
-        for paper in trending:
-            db_trending.add_context(str(uuid4()), paper)
-        return {'message': 'Trending papers added successfully'}
+        for title in titles:
+            db_titles.add_context(ids=[title.ids], documents=[title.documents], metadatas=[title.metadatas])
+        return {'message': 'success'}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get('/papers/get/trending')
-def get_trending_papers(query: Request):
+@app.get('/papers/get/title')
+def get_trending_papers(title: Getter):
     try:
-        trending = db_trending.query(query.query, query.n_results)
-        return {'papers': trending}
+        titles = db_titles.query(title.query, title.n_results)
+        return {'papers': titles}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post('/papers/post/lattest')
-def add_latest_papers():
+@app.post('/papers/post/abstracts')
+def add_latest_papers(abstracts: List[Abstract]):
     try:
-        lattest = scraper.returnable_text(page = 'lattest')
-        for paper in lattest:
-            db_lattest.add_context(str(uuid4()), paper)
-        return {'message': 'Latest papers added successfully'}
+        for abstract in abstracts:
+            db_abstracts.add_context(ids=[abstract.ids], documents=[abstract.documents], metadatas=[abstract.metadatas])
+        return {'message': 'success'}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get('/papers/get/lattest')
-def get_latest_papers(query: Request):
+@app.get('/papers/get/abstracts')
+def get_latest_papers(abstract: Getter):
     try:
-        lattest = db_lattest.query(query.query, query.n_results)
-        return {'papers': lattest}
+        abstracts = db_abstracts.query(abstract.query, abstract.n_results)
+        return {'papers': abstracts}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

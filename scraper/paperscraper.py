@@ -4,13 +4,15 @@ import logging
 from bs4 import BeautifulSoup
 
 class PaperScraper:
-    def __init__(self):
+    def __init__(self, page = 'latest'):
         self.base_url = 'https://paperswithcode.com'
+        self.selected_page = page
         self.latest = '/latest'
+        self.data = {}
 
-    def get_papers_soup(self, page: str = 'lattest'):
+    def get_papers_soup(self, page: str = 'latest'):
         with httpx.Client() as client:
-            if page == 'lattest':
+            if page == 'latest':
                 response = client.get(self.base_url + self.latest)
             elif page == 'trending':
                 response = client.get(self.base_url)
@@ -19,14 +21,14 @@ class PaperScraper:
                 return
             try:
                 soup = BeautifulSoup(response.text, 'html.parser')
-                self.paper_tittles = soup.find_all('a', href=lambda href: href and '/paper/' in href)
-                return self.paper_tittles
+                self.paper_titles = soup.find_all('a', href=lambda href: href and '/paper/' in href)
+                return self.paper_titles
             except Exception as e:
                 logging.error(f'Error getting the papers: {e}')
                 return
 
     def get_papers_link(self):
-        self.papers_link = [self.base_url + title['href'] for title in self.paper_tittles]
+        self.papers_link = [self.base_url + title['href'] for title in self.paper_titles]
         return self.papers_link
 
     def get_papers_abstract(self):
@@ -34,7 +36,7 @@ class PaperScraper:
         for link in self.papers_link:
             with httpx.Client() as client:
                 try:
-                    response = client.get(link)
+                    response = client.get(link, timeout = 1000)
                     soup = BeautifulSoup(response.text, 'html.parser')
                     abstract_div = soup.find('div', class_='paper-abstract')
                     p_tag = abstract_div.find('p')
@@ -50,7 +52,7 @@ class PaperScraper:
         for link in self.papers_link:
             with httpx.Client() as client:
                 try:
-                    response = client.get(link)
+                    response = client.get(link, timeout = 1000)
                     soup = BeautifulSoup(response.text, 'html.parser')
                     github_links = soup.find('a', href=lambda href: href and 'github.com' in href)
                     self.papers_github.append(github_links)
@@ -59,20 +61,47 @@ class PaperScraper:
                     self.papers_github.append(None)
         return self.papers_github
 
-    def returnable_text(self, page: str = 'lattest'):
-        self.get_papers_soup(page)
+    def create_data(self):
+        self.get_papers_soup(self.selected_page)
         self.get_papers_link()
         self.get_papers_abstract()
         self.get_papers_github()
-        self.papers = []
-        print(f"Lengths: titles={len(self.paper_tittles)}, abstracts={len(self.papers_abstract)}, github={len(self.papers_github)}")
-        for i in range(len(self.paper_tittles)):
-            github_text = self.papers_github[i].text if self.papers_github[i] is not None else "No GitHub link"
-            self.papers.append(
-                '{title} {abstract} {github}'.format(
-                    title = self.paper_tittles[i].text,
-                    abstract = self.papers_abstract[i] if self.papers_abstract[i] is not None else "No abstract",
-                    github = github_text
-                )
+        self.papers_title_list = []
+        self.papers_abstract_list = []
+
+        print(f"Lengths: titles={len(self.paper_titles)}, abstracts={len(self.papers_abstract)}, github={len(self.papers_github)}")
+        
+        for i in range(len(self.paper_titles)):
+            title_id = uuid4()
+            abstract_id = uuid4()
+            paper_id = uuid4()
+
+            self.papers_title_list.append({
+                'ids': title_id,
+                'documents':self.papers_title[i],
+                'metadatas':{
+                    'paper_url':self.papers_link[i],
+                    'github_url': self.papers_github[i],
+                    'document_type': 'title',
+                    'title': self.papers_title[i],
+                    'paper_id': paper_id
+                    }
+                }
             )
-        return self.papers
+
+            self.papers_abstract_list.append({
+                'ids': abstract_id,
+                'documents':self.papers_abstract[i],
+                'metadatas':{
+                    'paper_url':self.papers_link[i],
+                    'github_url': self.papers_github[i],
+                    'document_type': 'abstract',
+                    'abstract': self.papers_abstract[i],
+                    'paper_id': paper_id
+                    }
+                }
+            )
+
+        self.data = {'titles': self_papers_title_list, 'abstracts': self.papers_abstract_list}
+
+        return self.data

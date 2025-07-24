@@ -1,13 +1,30 @@
 from pydantic import BaseModel, Field
+from typing import Optional
 
-# class Paper(BaseModel):
-#     title: str = Field(exclude_none = True)
-#     abstract: str = Field(exclude_none = True)
-#     github_link: str = Field(exclude_none = True)
+class MetadataTitle(BaseModel):
+    paper_url: str = Field(exclude_none = True)
+    github_url: Optional[str] = None
+    document_type: str = 'title'
+    title: str = Field(exclude_none = True)
+    paper_id: str = Field(exclude_none = True) 
 
-# class PaperList(BaseModel):
-#     papers: list[Paper] = Field(exclude_none = True)
+class Title(BaseModel):
+    ids: str = Field(exclude_none = True)
+    documents: str = Field(exclude_none = True)
+    metadatas: MetadataTitle = Field(exclude_none = True)
 
-class Request(BaseModel):
+class MetadataAbstract(BaseModel):
+    paper_url: str = Field(exclude_none = True)
+    github_url: Optional[str] = None
+    document_type: str = 'abstract'
+    abstract: Optional[str] = None
+    paper_id: str = Field(exclude_none = True) 
+
+class Abstract(BaseModel):
+    ids: str = Field(exclude_none = True)
+    documents: Optional[str] = None
+    metadatas: MetadataAbstract = Field(exclude_none = True)
+
+class Getter:
     query: str = Field(exclude_none = True)
-    n_results: int = Field(exclude_none = True)
+    n_results: Optional[int] = 5

@@ -8,8 +8,8 @@ class DBClient:
         except:
             self.collection = self.client.create_collection(name = 'contexts')
 
-    def add_context(self, ids, texts):
-        self.collection.add(ids = ids, documents = texts)
+    def add_context(self, ids, documents, metadatas):
+        self.collection.add(ids = ids, documents = documents, metadatas = metadatas)
         return self
 
     def query(self, query, n_results):
