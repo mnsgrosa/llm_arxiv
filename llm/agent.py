@@ -1,9 +1,11 @@
 from langchain.tools import BaseTool
 from langchain.agents import AgentExecutor, create_openai_functions_agent
 from langchain.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
+from langchain_groq import ChatGroq
 import httpx
 import asyncio
+import os
+from dotenv import load_dotenv
 from typing import Dict, Any, Optional, List
 from pydantic import BaseModel, Field
 
@@ -130,27 +132,56 @@ class MCPToolManager:
                 agent = agent,
                 tools = self.tools,
                 verbose = True,
-                handle_parsing_errors = True
+                handle_parsing_errors = True,
+                max_iterations = 5
             )
 
-async def main():
-    mcp_manager = MCPToolManager('http://localhost:8000')
+def create_groq_llm(model: str = 'llama3-8b-8192') -> ChatGroq:
+    '''
+    Creates the free llm with groq api key
+    '''
+    load_dotenv()
+    api_key = os.getenv('GROQ_API_KEY')
 
-    await mcp_manager.setup_tools()
-
-    llm = ChatOpenAI(
-        model= 'gpt-4',
-        temperature = 0,
-        api_key = ...
+    return ChatGroq(
+        model = model,
+        temperature = 0.1,
+        groq_api_key = api_key,
+        max_tokens = 4096
     )
 
-    AgentExecutor = mcp_manager.create_agent(llm)
-
-    result = await agent_executor.ainvoke({
-        'input': ...
-    })
-
-    print(result['output'])
+async def main():
+    '''
+    Example of usage of MCP agent
+    '''
+    mcp_manager = MCPToolManager('http://localhost:8000')
+    
+    print("Discovering MCP tools...")
+    await mcp_manager.setup_tools()
+    print(f"Found {len(mcp_manager.tools)} MCP tools")
+    
+    try:
+        llm = create_groq_llm()
+        print("✅ Groq LLM initialized successfully")
+    except ValueError as e:
+        print(f"❌ Error initializing Groq LLM: {e}")
+        print("Get your free API key at: https://console.groq.com/")
+        return
+    
+    agent_executor = mcp_manager.create_agent(llm)
+    
+    test_query = "What MCP tools are available and what can they do?"
+    
+    print(f"\n🤖 Query: {test_query}")
+    print("=" * 60)
+    
+    try:
+        result = await agent_executor.ainvoke({
+            'input': test_query
+        })
+        print(f"\n📝 Response:\n{result['output']}")
+    except Exception as e:
+        print(f"❌ Error during execution: {e}")
 
 if __name__ == '__main__':
     asyncio.run(main())
