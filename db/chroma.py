@@ -12,8 +12,12 @@ class DBClient:
         self.collection.add(ids = ids, documents = documents, metadatas = metadatas)
         return self
 
-    def query(self, query, n_results):
+    def query(self, query, n_results, topic = None):
+        if topic:
+            return self.collection.query(query_texts = query, n_results = n_results, where = {'topic':topic}).get('documents')
         return self.collection.query(query_texts = query, n_results = n_results).get('documents')
 
-    def get(self):
+    def get(self, topic = None):
+        if topic:
+            return self.collection.get(where = {'topic':topic})
         return self.collection.get()

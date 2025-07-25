@@ -1,45 +1,42 @@
-from fastapi import FastAPI, HTTPException
-from typing import List, Dict, Optional
-from fastapi.responses import JSONResponse
-from backend.schemas import Title, Abstract, Getter
+from fastmcp import FastMCP, Context
+from typing import List, Dict
+from bs4 import BeautifulSoup
+from scraper.paperscraper import PaperScraper
 from db.chroma import DBClient
-from uuid import uuid4
-import json
+import httpx
 
-app = FastAPI()
-db_titles = DBClient('/tmp/chroma/titles')
-db_abstracts = DBClient('/tmp/chroma/abstracts')
+app = FastMCP()
+titles_db = DBClient('/tmp/chroma/titles')
+abstracts_db = DBClient('/tmp/chroma/abstracts')
+topics_db = DBCLient('/tmp/chroma/topics')
 
-@app.post('/papers/post/titles')
-def add_trending_papers(titles:List[Title]):
+@mcp.tool
+def get_arxiv_files(topic:str, max_results:int) -> str:
+    '''
+    Queries the topic provided by user and the number of results desired that the prompt tells you to scrape
+    '''
     try:
-        for title in titles:
-            db_titles.add_context(ids=[title.ids], documents=[title.documents], metadatas=[title.metadatas])
-        return {'message': 'success'}
+        scraper = PaperScraper(topic = topic, max_results = max_results)
+        data = scraper.get_arxiv_papers_data()
+        titles_db.add_context(**data['titles'])
+        abstracts_db.add_context(**data['abstracts'])
+        topics_db.add_context(**data['topic'])
+        return 'Successfully added papers to the database.'
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return f'Failed to add papers to the database due to:{e}'
 
-@app.get('/papers/get/titles')
-def get_trending_papers(title: Getter):
+@mcp.tool
+def get_stored_data(topic: str):
+    '''
+    This function takes a topic that the user is interested at, infer from the user prompt.
+    than, you will get a similar topic from the db and use it to querie to title db and topic db
+    '''
     try:
-        titles = db_titles.query(title.query, title.n_results)
-        return {'papers': titles}
+        topic_queried = topics_db.query(query = topic, n_results = 1)
+        titles_queried = titles_db.get(topic = topic_queried)
+        abstracts_queried = abstracts_db.get(topic = topic_queried)
+        return {
+            'titles': titles_queried, 'abstracts': abstracts_queried
+        }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post('/papers/post/abstracts')
-def add_latest_papers(abstracts: List[Abstract]):
-    try:
-        for abstract in abstracts:
-            db_abstracts.add_context(ids=[abstract.ids], documents=[abstract.documents], metadatas=[abstract.metadatas])
-        return {'message': 'success'}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get('/papers/get/abstracts')
-def get_latest_papers(abstract: Getter):
-    try:
-        abstracts = db_abstracts.query(abstract.query, abstract.n_results)
-        return {'papers': abstracts}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return {}
