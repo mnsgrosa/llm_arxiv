@@ -5,15 +5,18 @@ from scraper.paperscraper import PaperScraper
 from db.chroma import DBClient
 import httpx
 
-app = FastMCP()
+mcp = FastMCP()
 titles_db = DBClient('/tmp/chroma/titles')
 abstracts_db = DBClient('/tmp/chroma/abstracts')
-topics_db = DBCLient('/tmp/chroma/topics')
+topics_db = DBClient('/tmp/chroma/topics')
 
 @mcp.tool
-def get_arxiv_files(topic:str, max_results:int) -> str:
+def get_arxiv_files(topic:str, max_results:int = 10) -> str:
     '''
     Queries the topic provided by user and the number of results desired that the prompt tells you to scrape
+    ARGS:
+    topic [str]: The main focus of the query
+    max_results [int]: If the user didnt specify leave as 10
     '''
     try:
         scraper = PaperScraper(topic = topic, max_results = max_results)
@@ -30,6 +33,8 @@ def get_stored_data(topic: str):
     '''
     This function takes a topic that the user is interested at, infer from the user prompt.
     than, you will get a similar topic from the db and use it to querie to title db and topic db
+    ARGS:
+    topic [str]: The main focus of the query
     '''
     try:
         topic_queried = topics_db.query(query = topic, n_results = 1)
@@ -40,3 +45,6 @@ def get_stored_data(topic: str):
         }
     except Exception as e:
         return {}
+
+if __name__ == '__main__':
+    mcp.run()
