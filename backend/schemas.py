@@ -28,3 +28,19 @@ class Abstract(BaseModel):
 class Getter(BaseModel):
     query: str = Field(exclude_none = True)
     n_results: Optional[int] = 5
+
+class ToolCallRequest(BaseModel):
+    tool: str
+    arguments: Dict[str, Any]
+
+class ToolInfo(BaseModel):
+    name: str
+    description: str
+    inputSchema: Dict[str, Any]
+
+class ToolsResponse(BaseModel):
+    tools: List[ToolInfo]
+
+class ToolCallResponse(BaseModel):
+    content: Any
+    isError: bool = False
