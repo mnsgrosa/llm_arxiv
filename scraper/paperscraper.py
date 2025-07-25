@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 
 class PaperScraper:
     def __init__(self, page = 'latest'):
-        self.base_url = 'https://paperswithcode.com'
+        self.base_url = 'https://www.paperswithcode.com'
         self.selected_page = page
         self.latest = '/latest'
         self.data = {}
@@ -102,6 +102,6 @@ class PaperScraper:
                 }
             )
 
-        self.data = {'titles': self_papers_title_list, 'abstracts': self.papers_abstract_list}
+        self.data = {'titles': self.papers_title_list, 'abstracts': self.papers_abstract_list}
 
         return self.data

@@ -1,10 +1,16 @@
 # LLM Papers with Code
 
+## DISCLAIMER/AVISO
+
+Project discontinued due to the page being down for now
+
+Projeto descontinuado devido a queda do site paperswithcode no momento
+
 ## Português Brasileiro
 
 Um projeto que faz scraping e pega papers do PapersWithCode, permitindo que usuários busquem por papers relacionados usando consultas em linguagem natural.
 
-
+No momento está implementado um scheduler que irá popular o banco de dados assim que inicializado e fará um novo post apenas as 1 da manhã seguinte
 
 ### Requisitos
 

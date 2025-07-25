@@ -1,14 +1,12 @@
 from fastapi import FastAPI, HTTPException
 from typing import List, Dict, Optional
 from fastapi.responses import JSONResponse
-from schemas import Title, Abstract, Getter
+from backend.schemas import Title, Abstract, Getter
 from db.chroma import DBClient
-from backend.schemas import Request
 from uuid import uuid4
 import json
 
 app = FastAPI()
-scraper = PaperScraper()
 db_titles = DBClient('/tmp/chroma/titles')
 db_abstracts = DBClient('/tmp/chroma/abstracts')
 

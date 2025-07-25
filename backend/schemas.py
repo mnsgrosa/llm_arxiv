@@ -25,6 +25,6 @@ class Abstract(BaseModel):
     documents: Optional[str] = None
     metadatas: MetadataAbstract = Field(exclude_none = True)
 
-class Getter:
+class Getter(BaseModel):
     query: str = Field(exclude_none = True)
     n_results: Optional[int] = 5

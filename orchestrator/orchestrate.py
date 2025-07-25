@@ -38,7 +38,7 @@ def transform_abstracts(abstracts: List[Dict[str, str]]):
 def post_titles(titles:List[Title]):
     try:
         with httpx.Client() as client:
-            response = client.post('http://localhost:8000/papers/post/titles', data = titles.model_dump())
+            response = client.post('http://localhost:8000/papers/post/titles', data = titles)
         return Completed(message = 'Succesfully posted the titles of each papers')
     except Exception as e:
         raise Exception(f'Failed to post titles due to:{e}')
@@ -47,7 +47,7 @@ def post_titles(titles:List[Title]):
 def post_abstracts(abstracts: List[Abstract]):
     try:
         with httpx.Client() as client:
-            response = client.post('http://localhost:8000/papers/post/abstract', data = abstracts.model_dump())
+            response = client.post('http://localhost:8000/papers/post/abstracts', data = abstracts)
         return Completed(message = 'Succesfully posted the abstract of each paper')
     except Exception as e:
         raise Exception(f'Failed to post abstracts due to:{e}')
