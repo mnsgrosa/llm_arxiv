@@ -1,259 +1,198 @@
-from langchain.tools import BaseTool
-from langchain.agents import AgentExecutor, create_openai_functions_agent
-from langchain.prompts import ChatPromptTemplate
-from langchain.memory import ConversationBufferWindowMemory
-from langchain.schema import BaseMessage
-from langchain_groq import ChatGroq
-import httpx
 import asyncio
+import gradio as gr
+import json
 import os
+from typing import List, Tuple, Dict, Any
+from datetime import datetime
+
+from langchain_groq import ChatGroq
+from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain.prompts import ChatPromptTemplate
+from langchain.tools import BaseTool
+from langchain.memory import ConversationBufferWindowMemory
+from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.tools import ToolException
+
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
 from dotenv import load_dotenv
-from typing import Dict, Any, Optional, List
-from pydantic import BaseModel, Field
-
-def create_groq_llm(model: str = 'llama3-8b-8192') -> ChatGroq:
-    '''
-    Creates the free llm with groq api key
-    '''
-    load_dotenv()
-    api_key = os.getenv('GROQ_API_KEY')
-
-    return ChatGroq(
-        model = model,
-        temperature = 0.1,
-        groq_api_key = api_key,
-        max_tokens = 4096
-    )
+load_dotenv()
 
 class MCPTool(BaseTool):
-    '''
-    Custom LangChain tool to interface with FastMCP server
-    '''
-
-    name: str = 'mcp_tool'
-    description: str = 'Execute MCP server operations'
-    mcp_server_url: str = Field(default = 'http://localhost:8000')
-    tool_name: str = Field(...)
-
-    def __init__(self, mcp_server_url: str, tool_name: str, description: str = None, **kwargs):
-        super().__init__(
-            name = f'mcp_{tool_name}',
-            description = description or f'Execute {tool_name} operation via MCP server',
-            mcp_server_url = mcp_server_url,
-            tool_name = tool_name,
-            **kwargs
-        )
+    '''MCP Tool wrapper for LangChain'''
+    
+    def __init__(self, name: str, description: str, mcp_session: ClientSession):
+        super().__init__(name=name, description=description)
+        self.mcp_session = mcp_session
     
     def _run(self, **kwargs) -> str:
-        '''
-        Synchronous execution - runs async code in event loop
-        '''
+        return asyncio.run(self._arun(**kwargs))
+    
+    async def _arun(self, **kwargs) -> str:
         try:
-            loop = asyncio.get_event_loop()
-            return loop.run_until_complete(self._arun(**kwargs))
-        except RuntimeError:
-            return asyncio.run(self._arun(**kwargs))
-
-    async def _arun(self, **kwargs) ->str:
-        '''
-        Execute MCP tool asynchronously
-        '''
-        async with httpx.AsyncClient() as client:
-            try:
-                payload = {
-                    'tool': self.tool_name,
-                    'arguments': kwargs
-                }
-
-                response = await client.post(
-                    f'{self.mcp_server_url}/call_tool',
-                    json = payload,
-                    timeout = 30
-                )
-                response.raise_for_status()
-
-                result = response.json()
-
-                if 'content' in result:
-                    if isinstance(result['content'], list):
-                        return '\n'.join([item.get('text', str(item)) for item in result['content']])
-                    return str(result['content'])
-                
-                return str(result)
-
-            except httpx.RequestError as e:
-                return f'Error calling MCP server: {str(e)}'
-            except Exception as e:
-                return f'Unexpected error: {e}'
-
-class MCPChat:
-    '''
-    Manager class to handle multiple MCP tools and LangChain integration
-    '''
-    def __init__(self, mcp_server_url: str = 'http://localhost:8000'):
-        self.mcp_server_url = mcp_server_url
-        self.tools: List[MCPTool] = []
-        self.agent_executor = None
-        self.conversation_history = []
-
-        self.memory = ConversationBufferWindowMemory(
-            k = memory_k,
-            memory_key = 'chat_history',
-            return_messages = True
-        )
-
-        async def discover_tools(self) -> List[Dict[str, Any]]:
-            '''
-            Gets the tools exposed by the fastapi backend
-            '''
-            async with httpx.AsyncClient() as client:
-                try:
-                    response = await client.get(f'{self.mcp_server_url}/tools')
-                    response.raise_for_status()
-                    return response.json().get('tools', [])
-                except Exception as e:
-                    print(f'Error discovering MCP tools: {e}')
-                    return []
-        
-        async def setup_tools(self) -> List[MCPTool]:
-            '''
-            Setup Langchain tools from MCP server capabilities
-            '''
-            discover_tools = await self.discover_tools()
-
-            for tool_info in discover_tools:
-                tool = MCPTool(
-                    mcp_server_url = self.mcp_server_url,
-                    tool_name = tool_info['name'],
-                    description = tool_info.get('description', f"MCP: tool:{tool_info['name']}")
-                )
-                self.tools.append(tool)
-            
-            return self.tools
-
-        def create_agent(self, llm, system_prompt: str = None) -> AgentExecutor:
-            '''
-            Create a LangChain agent with MCP tools
-            '''
-
-            if not self.tools:
-                raise ValueError('No MCP tools available. Run setup_tools() first')
-
-            if system_prompt is None:
-                system_prompt = '''
-                You are a helpful AI research assistant with access to MCP tools for paper scraping and ChromaDB operations.
-                
-                Available capabilities:
-                - Scrape academic papers from various sources
-                - Store and retrieve information from ChromaDB vector database
-                - Maintain context across our conversation
-                
-                Always:
-                - Explain what tools you're using and why
-                - Reference previous parts of our conversation when relevant
-                - Ask clarifying questions if needed
-                - Provide detailed explanations of your findings
-                '''
-
-            prompt = ChatPromptTemplate.from_messages([
-                ('system', system_prompt),
-                ('human', '{input}'),
-                ('placeholder', '{chat_history}'),
-                ('placeholder', '{agent_scratchpad}')
-            ])
-
-            agent = create_openai_functions_agent(llm, self.tools, prompt)
-
-            self.agent_executor = AgentExecutor(
-                agent = agent,
-                tools = self.tools,
-                memory = self.memory,
-                verbose = True,
-                handle_parsing_errors = True,
-                max_iterations = 5,
-                return_intermediate_steps = True
-            )
-            return self.agent_executor
-
-    async def chat(self, user_input: str) -> Dict[str, Any]:
-        '''
-        Send message to interact with the model
-        '''
-        if not self.agent_executor:
-            raise ValueError('Agent not initialized. Run create_agent() first.')
-        
-        try:
-            self.conversation_history({'role':'user', 'content':user_input})
-            result = await self.agent_executor.ainvoke({
-                'input': user_input
-            })
-
-            self.conversation_history.append({'role':'assistant', 'content':result['output']})
-            return {
-                'response': result['output'],
-                'intermediate_steps': result.get('intermediate_steps', []),
-                'conversation_length': len(self.conversation_history)
-            }
+            result = await self.mcp_session.call_tool(self.name, kwargs)
+            return json.dumps(result.content, indent=2)
         except Exception as e:
-            error_msg = f"Error during conversation: {e}"
-            self.conversation_history.append({"role": "system", "content": error_msg})
-            return {'response': error_msg, 'intermediate_steps': [], 'error': True}
+            raise ToolException(f'MCP tool error: {str(e)}')
 
-    def get_conversation_history(self) -> List[Dict[str, str]]:
-        '''
-        Get the full conversation history
-        '''
-        return self.conversation_history.copy()
+class ChatPaperAgent:
+    def __init__(self):
+        self.groq_api_key = os.getenv('GROQ_API_KEY')
+        self.mcp_session = None
+        self.tools = []
+        self.agent_executor = None
+        self.memory = ConversationBufferWindowMemory(
+            memory_key = 'chat_history',
+            return_messages = True,
+            k=10  
+        )
+        self.chat_history = []
+        self.current_papers = {} 
+        
+    async def initialize(self):
+        '''Initialize MCP connection and create the conversational agent'''
+        server_params = StdioServerParameters(
+            command = 'python -m llm_arxiv.mcp.mcp_server',
+            env = None
+        )
+        
+        async with stdio_client(server_params) as (read, write):
+            async with ClientSession(read, write) as session:
+                self.mcp_session = session
+                await session.initialize()
+                
+                tools_result = await session.list_tools()
+                for tool_info in tools_result.tools:
+                    mcp_tool = MCPTool(
+                        name = tool_info.name,
+                        description = tool_info.description,
+                        mcp_session = session
+                    )
+                    self.tools.append(mcp_tool)
+                
+                llm = ChatGroq(
+                    groq_api_key=self.groq_api_key,
+                    model_name='llama3-8b-8192',
+                    temperature=0.3,  # Slightly higher for more conversational responses
+                    max_tokens=1024
+                )
+                
+                # Create conversational prompt
+                prompt = ChatPromptTemplate.from_messages([
+                    ('system', '''You are a knowledgeable research assistant that helps users explore and discuss academic papers. 
 
-    def clear_conversation(self):
-        '''
-        Clear conversation history and memory
-        '''
-        self.conversation_history.clear()
+                    Available tools:
+                    - scrape_arxiv_papers: Get new papers from arXiv on a topic
+                    - search_stored_papers: Search papers already in the database  
+                    - get_or_scrape_papers: Smart search (tries database first, then arXiv)
+                    - list_available_topics: Show what topics are in the database
+
+                    Guidelines:
+                    1. Be conversational and engaging when discussing papers
+                    2. When users ask about papers, first check if you have relevant ones, then search/scrape if needed
+                    3. Summarize key findings in an accessible way
+                    4. Ask follow-up questions to help users dive deeper into interesting aspects
+                    5. Remember previous papers discussed in this conversation
+                    6. If users ask about specific papers by title, search for them
+                    7. Offer to find related papers when appropriate
+
+                    Remember: You're having a conversation about research, not just answering isolated questions.'''),
+                    ('placeholder', '{chat_history}'),
+                    ('human', '{input}'),
+                    ('placeholder', '{agent_scratchpad}')
+                ])
+
+                agent = create_tool_calling_agent(llm, self.tools, prompt)
+                self.agent_executor = AgentExecutor(
+                    agent=agent,
+                    tools=self.tools,
+                    verbose=True,
+                    handle_parsing_errors=True,
+                    memory=self.memory
+                )
+    
+    async def chat(self, message: str) -> str:
+        '''Process a chat message and return response'''
+        if not self.agent_executor:
+            return 'Agent not initialized. Please restart the interface.'
+        
+        try:
+            context_message = message
+            if self.current_papers:
+                paper_titles = list(self.current_papers.keys())[:3]  # Mention last 3 papers
+                context_message += f"\n\n[Context: We've recently discussed these papers: {', '.join(paper_titles)}]"
+            
+            result = await self.agent_executor.ainvoke({
+                'input': context_message,
+                'chat_history': self.memory.chat_memory.messages
+            })
+            
+            response = result['output']
+            
+            self._extract_papers_from_response(response)
+
+            self.chat_history.append((message, response))
+            
+            return response
+            
+        except Exception as e:
+            return f'Sorry, I encountered an error: {str(e)}'
+    
+    def _extract_papers_from_response(self, response: str):
+        '''Extract paper titles from agent response to maintain context'''
+        if 'title' in response.lower() or 'paper' in response.lower():
+            # This is a simplified version - in practice you'd parse the JSON response
+            # from your MCP tools to extract actual paper data
+            pass
+    
+    def get_chat_history(self) -> List[Tuple[str, str]]:
+        '''Get formatted chat history for Gradio'''
+        return self.chat_history
+    
+    def clear_history(self):
+        '''Clear chat history'''
+        self.chat_history = []
+        self.current_papers = {}
         self.memory.clear()
-        print("Conversation history cleared.")
 
-    def save_conversation(self, filename: str):
-        '''
-        Save conversation to a file
-        '''
-        import json
-        with open(filename, 'w') as f:
-            json.dump(self.conversation_history, f, indent=2)
-        print(f"Conversation saved to {filename}")
+agent = None
 
-async def main():
-    '''
-    Example of usage of MCP agent
-    '''
-    mcp_manager = MCPToolManager('http://localhost:8000')
+async def initialize_agent():
+    '''Initialize the agent - call this once'''
+    global agent
+    if agent is None:
+        agent = ChatPaperAgent()  
+        await agent.initialize()
+    return agent
+
+def chat_fn(message: str, history: List[List[str]]) -> Tuple[str, List[List[str]]]:
+    '''Gradio chat function'''
+    if not message.strip():
+        return '', history
     
-    print("Discovering MCP tools...")
-    await mcp_manager.setup_tools()
-    print(f"Found {len(mcp_manager.tools)} MCP tools")
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     
     try:
-        llm = create_groq_llm()
-        print("✅ Groq LLM initialized successfully")
-    except ValueError as e:
-        print(f"❌ Error initializing Groq LLM: {e}")
-        print("Get your free API key at: https://console.groq.com/")
-        return
+        if agent is None:
+            loop.run_until_complete(initialize_agent())
+        
+        response = loop.run_until_complete(agent.chat(message))
+        
+        history.append([message, response])
+        
+        return '', history
     
-    agent_executor = mcp_manager.create_agent(llm)
-    
-    test_query = "What MCP tools are available and what can they do?"
-    
-    print(f"\n🤖 Query: {test_query}")
-    print("=" * 60)
-    
-    try:
-        result = await agent_executor.ainvoke({
-            'input': test_query
-        })
-        print(f"\n📝 Response:\n{result['output']}")
     except Exception as e:
-        print(f"❌ Error during execution: {e}")
+        error_response = f'Error: {str(e)}'
+        history.append([message, error_response])
+        return '', history
+    
+    finally:
+        loop.close()
 
-if __name__ == '__main__':
-    asyncio.run(main())
+def clear_chat():
+    '''Clear chat history'''
+    if agent:
+        agent.clear_history()
+    return []
