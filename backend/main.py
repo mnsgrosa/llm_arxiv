@@ -1,105 +1,144 @@
 from fastapi import FastAPI, HTTPException
-from schemas import ToolCallRequest, ToolCallResponse, ToolsResponse
+from pydantic import BaseModel
 from typing import List, Dict, Any
 import uvicorn
 import inspect
-from mcp.mcp_tools import TOOLS
+from .schemas import ToolsResponse, ToolCallResponse, ToolCallRequest, ToolInfo
+from ..mcp.mcp_server import scrape_arxiv_papers, search_stored_papers, get_or_scrape_papers, list_available_topics
 
-app = FastAPI(title = 'ArXiv Paper HTTP API')
+app = FastAPI(title="ArXiv Paper HTTP API", version="1.0.0")
 
-def extract_tool_schema(func) -> Dict[str, Any]:
-    '''
-    Extract schema information from signature and docstring
-    '''
-    sig = inspect.signature(func)
-    doc = inspect.getdoc(func) or ''
-
-    properties = {}
-    required = []
-
-    mapper = {
-        str: 'string',
-        int: 'integer',
-        float: 'float',
-        bool: 'boolean',
-        list: 'array',
-        dict: 'object'
-    }
-
-    for param_name, param in sig.parameters.items():
-        if param_name == 'self':
-            continue
-
-        if param.annotation != inspect.Parameter.empty:
-            param_type = mapper[param.annotation]
-
-        properties[param_name] = {'type': param_type}
-
-        if 'ARGS:' in doc:
-            args_section = doc.split('ARGS:')[1]
-            for line in args_section.split('\n'):
-                if param_name in line and '[' in line and ']' in line:
-                    desc_part = line.split(']:')
-                    if len(desc_part) > 1:
-                        properties[param_name]['description'] = desc_part[1].strip()
-            
-            if param.default == inspect.Parameter.empty:
-                required.append(param_name)
-            
-    return {
-        'type': 'object',
-        'properties': properties,
-        'required': required
-    }
-
-@app.get('/tools', response = ToolsResponse)
-async def get_tools():
-    tools = []
-
-    tool_registry = getattr(mcp, '_tools', {})
-
-    for tool_name, tool_func in tool_registry.items():
-        schema = extract_tool_schema(tool_func)
-        description = inspect.getdoc(tool_func) or f'MCP tool: {tool_name}'
-
-        if 'ARGS:' in description:
-            description = description.split('ARGS:')[0].strip()
-        else:
-            description = description.split('\n')[0].strip()
-
-        tools.append(ToolInfo(
-            name = tool_name,
-            description = description,
-            inputSchema = schema
-        ))
-
-    return ToolsResponse(tools = tools)
-
-@app.post('/call_tool', response = ToolCallResponse)
-async def call_tool(request: ToolCallRequest):
+def handle_tool_execution(func, **kwargs):
+    """Generic handler for tool execution with consistent error handling"""
     try:
-        tool_registry = getattr(mcp, '_tools', {})
-
-        if request.tool not in tool_registry:
-            raise HTTPException(
-                status_code = 404,
-                detail = f'Tool {request.tool} not found from {list(tool_registry.keys())}'
+        result = func(**kwargs)
+        
+        if isinstance(result, dict) and 'error' in result:
+            return StandardResponse(
+                data=None, 
+                error=result['error'], 
+                success=False
             )
-
-        tool_func = tool_registry[request.tool]
-
-        result = tool_func(**request.arguments)
-
-        if asyncio.iscoroutine(result):
-            result = await result
-
-        return ToolCallResponse(content = result, isError = False)
-
+        
+        return StandardResponse(data=result, success=True)
+        
     except Exception as e:
-        return ToolCallResponse(
-            content=f"Error executing tool '{request.tool}': {str(e)}", 
-            isError=True
+        return StandardResponse(
+            data=None, 
+            error=str(e), 
+            success=False
         )
 
+@app.get("/tools", response_model=ToolsResponse)
+async def get_tools():
+    '''
+    Get list of available tools with their schemas
+    '''
+    tools = [
+        ToolInfo(
+            name="scrape_arxiv_papers",
+            description="Scrapes papers from arXiv for a given topic and stores them in the database",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "topic": {"type": "string", "description": "The research topic to search for"},
+                    "max_results": {"type": "integer", "description": "Maximum number of papers to scrape", "default": 10}
+                },
+                "required": ["topic"]
+            }
+        ),
+        ToolInfo(
+            name="search_stored_papers", 
+            description="Searches for papers in the local database based on topic similarity",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "topic": {"type": "string", "description": "The research topic to search for"},
+                    "max_results": {"type": "integer", "description": "Maximum number of results to return", "default": 10}
+                },
+                "required": ["topic"]
+            }
+        ),
+        ToolInfo(
+            name="get_or_scrape_papers",
+            description="Attempts to get papers from database first, scrapes from arXiv if none found", 
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "topic": {"type": "string", "description": "The research topic to search for"},
+                    "max_results": {"type": "integer", "description": "Maximum number of results to return", "default": 10}
+                },
+                "required": ["topic"]
+            }
+        ),
+        ToolInfo(
+            name="list_available_topics",
+            description="Lists topics currently stored in the database",
+            inputSchema={
+                "type": "object", 
+                "properties": {
+                    "limit": {"type": "integer", "description": "Maximum number of topics to return", "default": 20}
+                },
+                "required": []
+            }
+        )
+    ]
+    
+    return ToolsResponse(tools=tools)
+
+
+@app.post('/scrape', response_model=StandardResponse)
+async def scrape_papers(request: ScrapeRequest):
+    '''
+    Scrape arXiv papers for a given topic
+    '''
+    return handle_tool_execution(
+        scrape_arxiv_papers,
+        topic=request.topic,
+        max_results=request.max_results
+    )
+
+@app.post('/search', response_model=StandardResponse) 
+async def search_papers(request: SearchRequest):
+    '''
+    Search stored papers by topic similarity
+    '''
+    return handle_tool_execution(
+        search_stored_papers,
+        topic=request.topic,
+        max_results=request.max_results
+    )
+
+@app.post('/get_or_scrape', response_model=StandardResponse)
+async def get_or_scrape(request: GetOrScrapeRequest):
+    '''
+    Get papers from database or scrape if not found
+    '''
+    return handle_tool_execution(
+        get_or_scrape_papers,
+        topic=request.topic,
+        max_results=request.max_results
+    )
+
+
+@app.post('/topics', response_model=StandardResponse)
+async def list_topics(request: ListTopicsRequest):
+    '''
+    List available topics in the database
+    '''
+    return handle_tool_execution(
+        list_available_topics,
+        limit=request.limit
+    )
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "service": "arxiv-paper-http-server"}
+
 if __name__ == '__main__':
+    print("Starting HTTP API server...")
+    print("Available endpoints:")
+    print("- GET /tools")
+    print("- POST /call_tool") 
+    print("- GET /health")
     uvicorn.run(app, host = '0.0.0.0', port = 9001, log_level = 'info')

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, Dict, List, Any
 
 class MetadataTitle(BaseModel):
     paper_url: str = Field(exclude_none = True)
@@ -44,3 +44,23 @@ class ToolsResponse(BaseModel):
 class ToolCallResponse(BaseModel):
     content: Any
     isError: bool = False
+
+class ScrapeRequest(BaseModel):
+    topic: str
+    max_results: int = 10
+
+class SearchRequest(BaseModel):
+    topic: str
+    max_results: int = 10
+
+class GetOrScrapeRequest(BaseModel):
+    topic: str
+    max_results: int = 10
+
+class ListTopicsRequest(BaseModel):
+    limit: int = 20
+
+class StandardResponse(BaseModel):
+    data: Any
+    error: Optional[str] = None
+    success: bool = True

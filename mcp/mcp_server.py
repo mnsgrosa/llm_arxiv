@@ -1,7 +1,7 @@
 from fastmcp import FastMCP
 from typing import Dict, Any, List
-from .scraper.paperscraper import PaperScraper
-from .db.chroma import DBClient
+from ..scraper.paperscraper import PaperScraper
+from ..db.chroma import DBClient
 
 mcp = FastMCP()
 
@@ -10,7 +10,7 @@ abstracts_db = DBClient('/tmp/chroma/abstracts')
 topics_db = DBClient('/tmp/chroma/topics')
 
 @mcp.tool
-def scrape_arxiv_papers(topic: str, max_results: int = 10) -> str:
+def scrape_arxiv_papers(topic: str, max_results: int = 10) -> Dict[str, Any]:
     """
     Scrapes papers from arXiv for a given topic and stores them in the database.
     
@@ -29,9 +29,9 @@ def scrape_arxiv_papers(topic: str, max_results: int = 10) -> str:
         abstracts_db.add_context(**data['abstracts'])
         topics_db.add_context(**data['topic'])
         
-        return f'Successfully scraped and stored {len(data.get("titles", {}).get("documents", []))} papers for topic: {topic}'
+        return data
     except Exception as e:
-        return f'Failed to scrape papers: {str(e)}'
+        return {'error': e}
 
 @mcp.tool
 def search_stored_papers(topic: str, max_results: int = 10) -> Dict[str, Any]:
@@ -84,7 +84,7 @@ def get_or_scrape_papers(topic: str, max_results: int = 10) -> Dict[str, Any]:
         
         if stored_papers.get('error') or not stored_papers.get('titles'):
             scrape_result = scrape_arxiv_papers(topic, max_results)
-            if 'Successfully' in scrape_result:
+            if scrape_result and not 'error' in scrape_result:
                 stored_papers = search_stored_papers(topic, max_results)
                 stored_papers['scraped'] = True
             else:
@@ -111,7 +111,7 @@ def list_available_topics(limit: int = 20) -> List[str]:
         all_topics = topics_db.get_all(limit=limit)
         return all_topics.get('documents', [])
     except Exception as e:
-        return [f'Error retrieving topics: {str(e)}']
+        return ['error']
 
 if __name__ == '__main__':
     print("Starting MCP server...")
