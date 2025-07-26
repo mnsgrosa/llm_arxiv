@@ -1,6 +1,8 @@
 from langchain.tools import BaseTool
 from langchain.agents import AgentExecutor, create_openai_functions_agent
 from langchain.prompts import ChatPromptTemplate
+from langchain.memory import ConversationBufferWindowMemory
+from langchain.schema import BaseMessage
 from langchain_groq import ChatGroq
 import httpx
 import asyncio
@@ -8,6 +10,20 @@ import os
 from dotenv import load_dotenv
 from typing import Dict, Any, Optional, List
 from pydantic import BaseModel, Field
+
+def create_groq_llm(model: str = 'llama3-8b-8192') -> ChatGroq:
+    '''
+    Creates the free llm with groq api key
+    '''
+    load_dotenv()
+    api_key = os.getenv('GROQ_API_KEY')
+
+    return ChatGroq(
+        model = model,
+        temperature = 0.1,
+        groq_api_key = api_key,
+        max_tokens = 4096
+    )
 
 class MCPTool(BaseTool):
     '''
@@ -70,16 +86,26 @@ class MCPTool(BaseTool):
             except Exception as e:
                 return f'Unexpected error: {e}'
 
-class MCPToolManager:
+class MCPChat:
     '''
     Manager class to handle multiple MCP tools and LangChain integration
     '''
-
     def __init__(self, mcp_server_url: str = 'http://localhost:8000'):
         self.mcp_server_url = mcp_server_url
         self.tools: List[MCPTool] = []
+        self.agent_executor = None
+        self.conversation_history = []
+
+        self.memory = ConversationBufferWindowMemory(
+            k = memory_k,
+            memory_key = 'chat_history',
+            return_messages = True
+        )
 
         async def discover_tools(self) -> List[Dict[str, Any]]:
+            '''
+            Gets the tools exposed by the fastapi backend
+            '''
             async with httpx.AsyncClient() as client:
                 try:
                     response = await client.get(f'{self.mcp_server_url}/tools')
@@ -115,40 +141,86 @@ class MCPToolManager:
 
             if system_prompt is None:
                 system_prompt = '''
-                You are a helpful AI assistant with access to MCP (Model Context Protocol) tools.
-                Use the available tools to help answer questions and tasks.
-                always explain what tools you're using and why
+                You are a helpful AI research assistant with access to MCP tools for paper scraping and ChromaDB operations.
+                
+                Available capabilities:
+                - Scrape academic papers from various sources
+                - Store and retrieve information from ChromaDB vector database
+                - Maintain context across our conversation
+                
+                Always:
+                - Explain what tools you're using and why
+                - Reference previous parts of our conversation when relevant
+                - Ask clarifying questions if needed
+                - Provide detailed explanations of your findings
                 '''
 
             prompt = ChatPromptTemplate.from_messages([
                 ('system', system_prompt),
                 ('human', '{input}'),
+                ('placeholder', '{chat_history}'),
                 ('placeholder', '{agent_scratchpad}')
             ])
 
             agent = create_openai_functions_agent(llm, self.tools, prompt)
 
-            return AgentExecutor(
+            self.agent_executor = AgentExecutor(
                 agent = agent,
                 tools = self.tools,
+                memory = self.memory,
                 verbose = True,
                 handle_parsing_errors = True,
-                max_iterations = 5
+                max_iterations = 5,
+                return_intermediate_steps = True
             )
+            return self.agent_executor
 
-def create_groq_llm(model: str = 'llama3-8b-8192') -> ChatGroq:
-    '''
-    Creates the free llm with groq api key
-    '''
-    load_dotenv()
-    api_key = os.getenv('GROQ_API_KEY')
+    async def chat(self, user_input: str) -> Dict[str, Any]:
+        '''
+        Send message to interact with the model
+        '''
+        if not self.agent_executor:
+            raise ValueError('Agent not initialized. Run create_agent() first.')
+        
+        try:
+            self.conversation_history({'role':'user', 'content':user_input})
+            result = await self.agent_executor.ainvoke({
+                'input': user_input
+            })
 
-    return ChatGroq(
-        model = model,
-        temperature = 0.1,
-        groq_api_key = api_key,
-        max_tokens = 4096
-    )
+            self.conversation_history.append({'role':'assistant', 'content':result['output']})
+            return {
+                'response': result['output'],
+                'intermediate_steps': result.get('intermediate_steps', []),
+                'conversation_length': len(self.conversation_history)
+            }
+        except Exception as e:
+            error_msg = f"Error during conversation: {e}"
+            self.conversation_history.append({"role": "system", "content": error_msg})
+            return {'response': error_msg, 'intermediate_steps': [], 'error': True}
+
+    def get_conversation_history(self) -> List[Dict[str, str]]:
+        '''
+        Get the full conversation history
+        '''
+        return self.conversation_history.copy()
+
+    def clear_conversation(self):
+        '''
+        Clear conversation history and memory
+        '''
+        self.conversation_history.clear()
+        self.memory.clear()
+        print("Conversation history cleared.")
+
+    def save_conversation(self, filename: str):
+        '''
+        Save conversation to a file
+        '''
+        import json
+        with open(filename, 'w') as f:
+            json.dump(self.conversation_history, f, indent=2)
+        print(f"Conversation saved to {filename}")
 
 async def main():
     '''
