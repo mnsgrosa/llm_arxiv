@@ -1,3 +1,76 @@
+
+# LLM Arxiv Explorer (Português)
+
+Este projeto é uma ferramenta de exploração de artigos de pesquisa que utiliza um Modelo de Linguagem de Grande Escala (LLM) para ajudar usuários a descobrir e compreender artigos acadêmicos do repositório arXiv.
+
+## Funcionalidades
+
+*   **Busca Semântica:** Encontre artigos relevantes baseados em consultas em linguagem natural.
+*   **Resumo Automatizado:** Obtenha resumos concisos de artigos de pesquisa.
+*   **Modelagem de Tópicos:** Explore os principais tópicos e temas em uma coleção de artigos.
+*   **Interface Interativa:** Uma interface web amigável para navegar e pesquisar artigos.
+
+## Estrutura de Arquivos
+
+```
+.
+├── .env.example
+├── .gitignore
+├── Dockerfile.gradio
+├── Dockerfile.mcp
+├── README.md
+├── docker-compose.yml
+├── llm
+│   ├── __init__.py
+│   ├── agent.py
+│   ├── mcp_server.py
+│   ├── app.py
+│   ├── db
+│   │   ├── __init__.py
+│   │   └── chroma.py
+│   ├── scraper
+│   │   ├── __init__.py
+│   │   └── paperscraper.py
+│   └── shared_paper_tools.py
+└── requirements.txt
+```
+
+## Configuração
+
+1. **Obter a chave da API Groq**
+    [Chave da API Groq](https://console.groq.com/keys)
+
+2.  **Clonar o repositório:**
+    ```bash
+    git clone https://github.com/mnsgrosa/llm_arxiv
+    cd llm_arxiv
+    ```
+    
+3. **Criar um arquivo .env**
+    Crie um arquivo .env seguindo o exemplo do .env.example
+    GROQ_API_KEY = sua_chave_api_aqui
+
+4.  **Executar o docker compose**
+    ```bash
+    docker compose up -d
+    ```
+
+## Uso
+
+1.  **Acesse o link hospedado em**
+    [localhost:7860](http://localhost:7860)
+
+2.  **Comece a explorar!**
+    Você pode conversar com o agente e pedir para ele listar suas ferramentas.
+    As ferramentas disponíveis são:
+        scrape_arxiv
+        get_files_from_database
+        get_or_scrape
+        get_topics
+    Você pode conversar sobre os artigos coletados pelo sistema. 
+
+ ---
+
 # LLM Arxiv Explorer
 
 This project is a research paper exploration tool that uses a Large Language Model (LLM) to help users discover and understand academic papers from the arXiv repository.
@@ -22,6 +95,7 @@ This project is a research paper exploration tool that uses a Large Language Mod
 ├── llm
 │   ├── __init__.py
 │   ├── agent.py
+│   ├── mcp_server.py
 │   ├── app.py
 │   ├── db
 │   │   ├── __init__.py
@@ -35,46 +109,34 @@ This project is a research paper exploration tool that uses a Large Language Mod
 
 ## Setup
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/your-username/your-repository.git
-    cd your-repository
-    ```
+1. **Get the groq API key**
+    [Groq api key](https://console.groq.com/keys)
 
-2.  **Create and activate a virtual environment:**
+2.  **Clone the repository:**
     ```bash
-    python3 -m venv venv
-    source venv/bin/activate
+    git clone https://github.com/mnsgrosa/llm_arxiv
+    cd llm_arxiv
     ```
+    
+3. **Create a .env**
+    Create a .env file just like the .env.example
+    GROQ_API_KEY = you_api_key_here
 
-3.  **Install the dependencies:**
+4.  **Run the docker compose**
     ```bash
-    pip install -r requirements.txt
+    docker compose up -d
     ```
-
-4.  **Set up the environment variables:**
-    Create a `.env` file from the `.env.example`:
-    ```bash
-    cp .env.example .env
-    ```
-    You will need to add your Groq API key to the `.env` file.
 
 ## Usage
 
-1.  **Start the application:**
-    ```bash
-    python -m llm.app
-    ```
+1.  **Go to the link hosted at**
+    [localhost:7860](http://localhost:7860)
 
-2.  **Open your web browser** and navigate to `http://localhost:7860`.
-
-3.  **Start exploring!**
-    You can use the search bar to find papers by keyword or topic. Click on a paper to see more details and a summary.
-
-## How to Contribute
-
-1.  Fork the repository.
-2.  Create a new branch for your feature or bug fix.
-3.  Make your changes and commit them.
-4.  Push your changes to your fork.
-5.  Create a pull request.
+2.  **Start exploring!**
+    You can chat with the agent, you can ask him to list its tools.
+    the tools are:
+        scrape_arxiv
+        get_files_from_database
+        get_or_scrape
+        get_topics
+    You can chat with it about the papers scraped
