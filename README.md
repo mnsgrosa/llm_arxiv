@@ -1,91 +1,80 @@
-# LLM Papers with Code
+# LLM Arxiv Explorer
 
-## DISCLAIMER/AVISO
+This project is a research paper exploration tool that uses a Large Language Model (LLM) to help users discover and understand academic papers from the arXiv repository.
 
-Project discontinued due to the page being down for now
+## Features
 
-Projeto descontinuado devido a queda do site paperswithcode no momento
+*   **Semantic Search:** Find relevant papers based on natural language queries.
+*   **Automated Summarization:** Get concise summaries of research papers.
+*   **Topic Modeling:** Explore the main topics and themes in a collection of papers.
+*   **Interactive Interface:** A user-friendly web interface for browsing and searching papers.
 
-## Português Brasileiro
+## File Structure
 
-Um projeto que faz scraping e pega papers do PapersWithCode, permitindo que usuários busquem por papers relacionados usando consultas em linguagem natural.
-
-No momento está implementado um scheduler que irá popular o banco de dados assim que inicializado e fará um novo post apenas as 1 da manhã seguinte
-
-### Requisitos
-
-O projeto utiliza os seguintes pacotes principais do Python:
-- **prefect**: Para orquestrar as ferramentas de scraping
-- **chromadb**: Para funcionalidade de banco de dados vetorial
-- **Pydantic**: Para validação de dados
-- **FastAPI**: Para possibilitar o envio de dados para o banco
-- **httpx**: Para fazer requisições HTTP
-- **BeautifulSoup4**: Para web scraping
-- **uuid**: Para gerar identificadores únicos
-
-#### Instalando os Requisitos
-
-Para instalar todos os pacotes necessários, você pode usar:
-```bash
-pip install python-dotenv smolagents chromadb httpx beautifulsoup4
+```
+.
+├── .env.example
+├── .gitignore
+├── Dockerfile.gradio
+├── Dockerfile.mcp
+├── README.md
+├── docker-compose.yml
+├── llm
+│   ├── __init__.py
+│   ├── agent.py
+│   ├── app.py
+│   ├── db
+│   │   ├── __init__.py
+│   │   └── chroma.py
+│   ├── scraper
+│   │   ├── __init__.py
+│   │   └── paperscraper.py
+│   └── shared_paper_tools.py
+└── requirements.txt
 ```
 
-### Estrutura do Projeto
+## Setup
 
-- `backend/`: Contém as funcionalidades para poder enviar dados para o banco
-- `orchestrator/`: Contém a lógica para o agendamento das ferramentas de orquestração
-- `db/`: Contém o cliente ChromaDB para operações de banco de dados vetorial
-- `scraper/`: Contém o PaperScraper para buscar papers do PapersWithCode
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/your-username/your-repository.git
+    cd your-repository
+    ```
 
-### Uso
+2.  **Create and activate a virtual environment:**
+    ```bash
+    python3 -m venv venv
+    source venv/bin/activate
+    ```
 
-O projeto permite que você:
-1. Faça scraping de papers em tendência e mais recentes do PapersWithCode
-2. Armazene informações dos papers em um banco de dados vetorial
-3. Consulte papers relacionados usando linguagem natural
+3.  **Install the dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-### Nota
+4.  **Set up the environment variables:**
+    Create a `.env` file from the `.env.example`:
+    ```bash
+    cp .env.example .env
+    ```
+    You will need to add your Groq API key to the `.env` file.
 
-Este projeto está atualmente em desenvolvimento. Documentação adicional será adicionada conforme o projeto evolui.
+## Usage
 
----
+1.  **Start the application:**
+    ```bash
+    python -m llm.app
+    ```
 
-## English
+2.  **Open your web browser** and navigate to `http://localhost:7860`.
 
-A project that scrapes and retrieves papers from PapersWithCode, allowing users to search for related papers using natural language queries.
+3.  **Start exploring!**
+    You can use the search bar to find papers by keyword or topic. Click on a paper to see more details and a summary.
 
-### Requirements
+## How to Contribute
 
-The project uses the following main Python packages:
-- **prefect**: For the orchestrating the scraping tools
-- **chromadb**: For vector database functionality
-- **Pydantic**: For data validation
-- **FastAPI**: So it is possible to post the data to the db
-- **httpx**: For making HTTP requests
-- **BeautifulSoup4**: For web scraping
-- **uuid**: For generating unique identifiers
-
-#### Installing Requirements
-
-To install all required packages, you can use:
-```bash
-pip install python-dotenv smolagents chromadb httpx beautifulsoup4
-```
-
-### Project Structure
-
-- `backend/`: Contains the features so it can post to the db
-- `orchestrator/`: Contains the logic for the schedule of orchestration tools
-- `db/`: Contains the ChromaDB client for vector database operations
-- `scraper/`: Contains the PaperScraper for fetching papers from PapersWithCode
-
-### Usage
-
-The project allows you to:
-1. Scrape trending and latest papers from PapersWithCode
-2. Store paper information in a vector database
-3. Query related papers using natural language
-
-### Note
-
-This project is currently in development. Additional documentation will be added as the project evolves.
+1.  Fork the repository.
+2.  Create a new branch for your feature or bug fix.
+3.  Make your changes and commit them.
+4.  Push your changes to your fork.
+5.  Create a pull request.
