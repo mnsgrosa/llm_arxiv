@@ -1,19 +1,22 @@
 services:
   mcp-server:
-    build: .
-    command: python ./llm/mcp/server.py
+    build:
+      context: .
+      dockerfile: Dockerfile.mcp
     ports:
       - "8000:8000"
     volumes:
       - ./data:/tmp/chroma
     environment:
-      - SERVICE_TYPE=mcp
+      - GROQ_API_KEY=${GROQ_API_KEY}
 
   gradio-app:
-    build: .
-    command: python ./llm/gradio/app.py
+    build:
+      context: .
+      dockerfile: Dockerfile.gradio
     ports:
       - "7860:7860"
     depends_on:
-      - http-server
-    
+      - mcp-server
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY}

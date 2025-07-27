@@ -1,0 +1,11 @@
+python-dotenv
+chromadb
+httpx
+beautifulsoup4
+gradio
+langchain-groq
+langchain
+langgraph
+langchain-mcp-adapters
+fastmcp
+lxml
