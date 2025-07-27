@@ -40,7 +40,7 @@ class MCPTool(BaseTool):
 class ChatPaperAgent:
     def __init__(self, mcp_command: List[str] = None):
         self.groq_api_key = os.getenv('GROQ_API_KEY')
-        self.server_url = 'http://localhost:8000/sse'
+        self.server_url = 'http://llm_arxiv-mcp-server-1:8000/sse'
         self.mcp_session = None
         self.tools = []
         self.agent_executor = None
