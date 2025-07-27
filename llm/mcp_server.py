@@ -1,5 +1,6 @@
 from fastmcp import FastMCP
 from shared_paper_tools import PaperToolsCore
+from typing import Dict, List, Any
 
 mcp = FastMCP()
 paper_tools = PaperToolsCore()
@@ -61,4 +62,8 @@ def list_available_topics(limit: int = 20) -> List[str]:
 
 if __name__ == '__main__':
     print("Starting MCP server...")
-    mcp.run()
+    mcp.run(transport = 'sse',
+        host="0.0.0.0",
+        port=8000,
+        log_level="info"
+    )

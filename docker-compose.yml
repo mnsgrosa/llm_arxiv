@@ -1,7 +1,7 @@
 services:
   mcp-server:
     build: .
-    command: python -m mcp.mcp_server
+    command: python ./llm/mcp/server.py
     ports:
       - "8000:8000"
     volumes:
@@ -9,21 +9,9 @@ services:
     environment:
       - SERVICE_TYPE=mcp
 
-  http-server:
-    build: .
-    command: python -m backend.main
-    ports:
-      - "9001:9001"
-    volumes:
-      - ./data:/tmp/chroma
-    environment:
-      - SERVICE_TYPE=http
-    depends_on:
-      - mcp-server
-
   gradio-app:
     build: .
-    command: python -m gradio.app
+    command: python ./llm/gradio/app.py
     ports:
       - "7860:7860"
     depends_on:

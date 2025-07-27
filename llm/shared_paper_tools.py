@@ -1,6 +1,6 @@
 from typing import Dict, Any, List
-from ..scraper.paperscraper import PaperScraper
-from ..db.chroma import DBClient
+from scraper.paperscraper import PaperScraper
+from db.chroma import DBClient
 
 class PaperToolsCore:
     """Core business logic for paper tools - shared between MCP and LangChain"""
