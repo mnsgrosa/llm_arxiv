@@ -34,10 +34,8 @@ async def main():
         type ='messages'
     )
     
-    interface.launch(
-        server_name="0.0.0.0",  
-        server_port=7860,       
-        share=False             
+    interface.launch(      
+        share = True           
     )
 
 if __name__ == '__main__':
