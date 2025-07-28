@@ -6,6 +6,7 @@ __pycache__/
 .coverage
 htmlcov/
 data/
+
 # Virtual Environment
 venv/
 env/
