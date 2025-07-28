@@ -5,11 +5,10 @@ __pycache__/
 .pytest_cache/
 .coverage
 htmlcov/
-
+data/
 # Virtual Environment
 venv/
 env/
 ENV/
 .env
 .venv
-data
