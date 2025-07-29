@@ -9,18 +9,21 @@ class PaperToolsCore:
         self.titles_db = DBClient('/tmp/chroma/titles')
         self.abstracts_db = DBClient('/tmp/chroma/abstracts')
         self.topics_db = DBClient('/tmp/chroma/topics')
+        self.links_db = DBClient('/tmp/chroma/links')
     
     def scrape_arxiv_papers(self, topic: str, max_results: int = 10) -> Dict[str, Any]:
         """Core scraping logic"""
         try:
             scraper = PaperScraper(topic=topic, max_results=max_results)
-            data = scraper.get_arxiv_papers_data()
+            data_dict =  scraper.get_arxiv_papers_data()
             
-            self.titles_db.add_context(**data['titles'])
-            self.abstracts_db.add_context(**data['abstracts'])
-            self.topics_db.add_context(**data['topic'])
-            
-            return data
+            for title, abstract, link in zip(data_dict['titles'], data_dict['abstracts'], data_dict['links']):
+                self.titles_db.add_context(title)    
+                self.abstracts_db.add_context(abstract)
+                self.links_db.add_context(link)
+            self.topics_db.add_context(data_dict['topic'])
+
+            return {'titles': data_dict['titles'], 'abstracts': data_dict['abstracts'], 'links': data_dict['links']}
         except Exception as e:
             return {'error': str(e)}
 
@@ -34,12 +37,14 @@ class PaperToolsCore:
             
             similar_topic = topic_results['documents'][0]
             
-            titles_results = self.titles_db.query(query=similar_topic, n_results=max_results)
-            abstracts_results = self.abstracts_db.query(query=similar_topic, n_results=max_results)
-            
+            titles_results = self.titles_db.query(topic = similar_topic, n_results = max_results)
+            abstracts_results = self.abstracts_db.query(topic = similar_topic, n_results = max_results)
+            link_results = self.links_db.query(topic = similar_topic, n_results = max_results)
+
             return {
                 'titles': titles_results.get('documents', []),
                 'abstracts': abstracts_results.get('documents', []),
+                'links': link_results.get('documents', []),
                 'metadata': {
                     'matched_topic': similar_topic,
                     'results_count': len(titles_results.get('documents', []))
@@ -73,4 +78,4 @@ class PaperToolsCore:
             all_topics = self.topics_db.get_all(limit=limit)
             return all_topics.get('documents', [])
         except Exception as e:
-            return ['error']
+            return {'error': f'Failed to list topics: {str(e)}'}

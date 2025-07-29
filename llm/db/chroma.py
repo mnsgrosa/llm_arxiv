@@ -8,11 +8,11 @@ class DBClient:
         except:
             self.collection = self.client.create_collection(name = 'contexts')
 
-    def add_context(self, ids, documents, metadatas):
-        self.collection.add(ids = ids, documents = documents, metadatas = metadatas)
+    def add_context(self, data):
+        self.collection.add(**data)
         return self
 
-    def query(self, query, n_results, topic = None):
+    def query(self, query = None, n_results = 1, topic = None):
         if topic:
             return self.collection.query(query_texts = query, n_results = n_results, where = {'topic':topic}).get('documents')
         return self.collection.query(query_texts = query, n_results = n_results).get('documents')

@@ -12,53 +12,86 @@ class PaperScraper:
         self.data = {}
 
     def get_arxiv_papers_data(self):
-        get_topic_url = self.base_url + self.topic + f'&start=0&max_results={self.max_results}'
-        with httpx.Client() as client:
-            data = client.get(get_topic_url).text
-        soup = BeautifulSoup(data, 'xml')
-        titles = soup.find_all('title')
-        summaries = soup.find_all('summary')
-        links = soup.find_all('link')
+        try:
+            get_topic_url = self.base_url + self.topic + f'&start=0&max_results={self.max_results}'
+            with httpx.Client() as client:
+                data = client.get(get_topic_url).text
+            soup = BeautifulSoup(data, 'xml')
+            entries = soup.find_all('entry')
+            
+            papers = []
 
-        self.papers_title_list = []
-        self.papers_abstract_list = []
-        topic_id = uuid4()
+            for entry in entries:
+                paper_info = {
+                    'title': entry.find('title').text.strip() if entry.find('title') else None,
+                    'summary': entry.find('summary').text.strip() if entry.find('summary') else None,
+                    'url': None
+                }
+                
+                links = entry.find_all('link')
+                for link in links:
+                    if (link.get('title') == 'pdf' and link.get('type') == 'application/pdf') or (link.get('rel') == 'alternate' and link.get('type') == 'text/html'):
+                        paper_info['url'] = link['href']
+                
+                papers.append(paper_info)
 
-        for i in range(len(summaries)):
-            paper_id = uuid4()
-            title_id = uuid4()
-            abstract_id = uuid4()
+            self.papers_title_list = []
+            self.papers_abstract_list = []
+            self.papers_link_list = []
 
-            self.papers_title_list.append({
-                    'ids': title_id,
-                    'documents':titles[i],
+            topic_id = uuid4().hex
+
+            for paper in papers:
+                paper_id = uuid4().hex
+                title_id = uuid4().hex
+                abstract_id = uuid4().hex
+                link_id = uuid4().hex
+
+                self.papers_link_list.append({
+                    'ids':link_id,
+                    'documents':paper.get('url', ''),
                     'metadatas':{
-                        'paper_url':links[i],
-                        'document_type': 'title',
-                        'title': titles[i],
+                        'paper_url':paper.get('url', ''),
+                        'document_type': 'link',
+                        'title':paper.get('title', ''),
                         'paper_id': paper_id,
-                        'topic': topic_id
+                        'topic': topic_id,
                         }
                     }
                 )
 
-            self.papers_abstract_list.append({
-                    'ids': abstract_id,
-                    'documents':summaries[i],
-                    'metadatas':{
-                        'paper_url':links[i],
-                        'document_type': 'abstract',
-                        'abstract': summaries[i],
-                        'paper_id': paper_id,
-                        'topic':topic_id
+                self.papers_title_list.append({
+                        'ids': title_id,
+                        'documents':paper.get('title', ''),
+                        'metadatas':{
+                            'paper_url':paper.get('url', ''),
+                            'document_type': 'title',
+                            'title': paper.get('title', ''),
+                            'paper_id': paper_id,
+                            'topic': topic_id,
+                            }
                         }
-                    }
-                )
-        
-        topics = {
-            'ids': topic_id,
-            'documents': self.topic,
-        }
+                    )
 
-        self.data = {'titles': self.papers_title_list, 'abstracts': self.papers_abstract_list, 'topic':topics}
-        return self.data
+                self.papers_abstract_list.append({
+                        'ids': abstract_id,
+                        'documents':paper.get('summary', ''),
+                        'metadatas':{
+                            'paper_url':paper.get('url', ''),
+                            'document_type': 'abstract',
+                            'abstract': paper.get('summary', ''),
+                            'paper_id': paper_id,
+                            'topic':topic_id,
+                            }
+                        }
+                    )
+            
+            topics = {
+                'ids': topic_id,
+                'documents': self.topic,
+            }
+
+            self.data = {'titles': self.papers_title_list, 'abstracts': self.papers_abstract_list, 'links':self.papers_link_list, 'topic':topics}
+            return self.data
+        except Exception as e:
+            return {}

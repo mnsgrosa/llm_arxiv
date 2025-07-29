@@ -1,0 +1,251 @@
+2025-07-28 20:06:53,474 - agent - INFO - Processing message: scrape 3 papers about llms
+2025-07-28 20:06:53,474 - agent - INFO - Context message: scrape 3 papers about llms
+2025-07-28 20:06:53,475 - agent - INFO - Invoking agent
+2025-07-28 20:08:51,910 - agent - INFO - Processing message: scrape 3 llms papers
+2025-07-28 20:08:51,910 - agent - INFO - Context message: scrape 3 llms papers
+2025-07-28 20:08:51,910 - agent - INFO - Invoking agent
+2025-07-28 20:09:20,228 - agent - INFO - Processing message: scrape 3 llm papers
+2025-07-28 20:09:20,228 - agent - INFO - Context message: scrape 3 llm papers
+2025-07-28 20:09:20,228 - agent - INFO - Invoking agent
+2025-07-28 20:09:21,756 - agent - ERROR - Error invoking: 
+2025-07-28 20:10:39,858 - agent - INFO - Processing message: scrape 3 llm papers
+2025-07-28 20:10:39,858 - agent - INFO - Context message: scrape 3 llm papers
+2025-07-28 20:10:39,860 - agent - INFO - Invoking agent
+2025-07-28 20:10:41,056 - agent - ERROR - Error invoking: 
+2025-07-28 20:14:32,584 - agent - INFO - Processing message: scrape 3 papers about llms
+2025-07-28 20:14:32,585 - agent - INFO - Context message: scrape 3 papers about llms
+2025-07-28 20:14:32,585 - agent - INFO - Invoking agent
+2025-07-28 20:14:33,861 - agent - ERROR - Error invoking: 
+2025-07-28 20:15:56,626 - agent - INFO - Processing message: scrape 3 papers about llms
+2025-07-28 20:15:56,626 - agent - INFO - Context message: scrape 3 papers about llms
+2025-07-28 20:15:56,626 - agent - INFO - Invoking agent: chat_history:[]
+2025-07-28 20:15:58,114 - agent - ERROR - Error invoking: 
+2025-07-28 20:16:15,962 - agent - INFO - Processing message: scrape 3 papers about llms
+2025-07-28 20:16:15,962 - agent - INFO - Context message: scrape 3 papers about llms
+2025-07-28 20:16:15,962 - agent - INFO - Invoking agent: chat_history:[]
+2025-07-28 20:16:15,966 - agent - ERROR - Error invoking: variable chat_history should be a list of base messages, got None of type <class 'NoneType'>
+2025-07-28 20:17:24,028 - agent - INFO - Processing message: scrape 3 papers about llms
+2025-07-28 20:17:24,028 - agent - INFO - Context message: scrape 3 papers about llms
+2025-07-28 20:17:24,028 - agent - INFO - Invoking agent: chat_history:
+2025-07-28 20:17:25,116 - agent - ERROR - Error invoking: 
+2025-07-28 20:19:24,082 - agent - INFO - Processing message: scrape 3 papers about llms
+2025-07-28 20:19:24,082 - agent - INFO - Context message: scrape 3 papers about llms
+2025-07-28 20:19:25,530 - agent - ERROR - Error invoking: 
+2025-07-28 20:21:55,879 - agent - INFO - Processing message: scrape 3 papers about llms
+2025-07-28 20:21:55,879 - agent - INFO - Context message: scrape 3 papers about llms
+2025-07-28 20:21:56,676 - agent - ERROR - Error invoking: 
+2025-07-28 20:22:10,034 - agent - INFO - Processing message: scrape 3 papers about llms
+2025-07-28 20:22:10,034 - agent - INFO - Context message: scrape 3 papers about llms
+2025-07-28 20:22:10,895 - agent - ERROR - Error invoking: 
+2025-07-28 20:22:41,708 - agent - INFO - Processing message: scrape 3 papers about llms
+2025-07-28 20:22:41,709 - agent - INFO - Context message: scrape 3 papers about llms
+2025-07-28 20:22:42,383 - agent - ERROR - Error invoking: 
+2025-07-28 20:22:42,383 - agent - ERROR - Error type: ClosedResourceError
+2025-07-28 20:25:52,583 - agent - INFO - Processing message: scrape 3 llm papers
+2025-07-28 20:25:52,583 - agent - INFO - Context message: scrape 3 llm papers
+2025-07-28 20:25:53,662 - agent - ERROR - Error invoking: 
+2025-07-28 20:25:53,662 - agent - ERROR - Error type: ClosedResourceError
+2025-07-28 20:26:01,405 - agent - INFO - Processing message: ClosedResourceError
+2025-07-28 20:26:01,405 - agent - INFO - Context message: ClosedResourceError
+2025-07-28 20:26:02,076 - agent - INFO - Agent invoked: {'input': 'ClosedResourceError', 'chat_history': [], 'output': "It seems like we're having a bit of a snag!"}
+2025-07-28 20:26:02,076 - agent - INFO - Appending
+2025-07-28 20:26:02,076 - agent - INFO - Appended
+2025-07-28 20:26:09,334 - agent - INFO - Processing message: scrape 3 llm papers
+2025-07-28 20:26:09,334 - agent - INFO - Context message: scrape 3 llm papers
+2025-07-28 20:26:10,337 - agent - ERROR - Error invoking: 
+2025-07-28 20:26:10,337 - agent - ERROR - Error type: ClosedResourceError
+2025-07-28 20:27:25,266 - agent - INFO - Processing message: scrape 3 llm papers
+2025-07-28 20:27:25,267 - agent - INFO - Context message: scrape 3 llm papers
+2025-07-28 20:27:26,168 - agent - ERROR - Error invoking: 
+2025-07-28 20:27:26,168 - agent - ERROR - Error type: ClosedResourceError
+2025-07-28 20:42:31,488 - agent - INFO - SSE connection established
+2025-07-28 20:42:31,488 - agent - INFO - MCP session created
+2025-07-28 20:42:31,491 - agent - INFO - MCP session initialized
+2025-07-28 20:42:31,493 - agent - INFO - Loaded 4 tools
+2025-07-28 20:42:31,494 - agent - ERROR - Error in chat: unhandled errors in a TaskGroup (1 sub-exception)
+2025-07-28 20:42:31,495 - agent - ERROR - Traceback:   + Exception Group Traceback (most recent call last):
+  |   File "/home/matheus/codigos/projects/llm_arxiv/llm/agent.py", line 111, in chat
+  |     async with sse_client(self.server_url) as (read, write):
+  |                ~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  |   File "/home/matheus/anaconda3/envs/llm_arxiv/lib/python3.13/contextlib.py", line 235, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "/home/matheus/codigos/projects/.venv/lib/python3.13/site-packages/mcp/client/sse.py", line 54, in sse_client
+  |     async with anyio.create_task_group() as tg:
+  |                ~~~~~~~~~~~~~~~~~~~~~~~^^
+  |   File "/home/matheus/codigos/projects/.venv/lib/python3.13/site-packages/anyio/_backends/_asyncio.py", line 772, in __aexit__
+  |     raise BaseExceptionGroup(
+  |         "unhandled errors in a TaskGroup", self._exceptions
+  |     ) from None
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "/home/matheus/codigos/projects/.venv/lib/python3.13/site-packages/mcp/client/sse.py", line 139, in sse_client
+    |     yield read_stream, write_stream
+    |   File "/home/matheus/codigos/projects/llm_arxiv/llm/agent.py", line 114, in chat
+    |     async with ClientSession(read, write) as session:
+    |                ~~~~~~~~~~~~~^^^^^^^^^^^^^
+    |   File "/home/matheus/codigos/projects/.venv/lib/python3.13/site-packages/mcp/shared/session.py", line 218, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/matheus/codigos/projects/.venv/lib/python3.13/site-packages/anyio/_backends/_asyncio.py", line 772, in __aexit__
+    |     raise BaseExceptionGroup(
+    |         "unhandled errors in a TaskGroup", self._exceptions
+    |     ) from None
+    | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+    +-+---------------- 1 ----------------
+      | Traceback (most recent call last):
+      |   File "/home/matheus/codigos/projects/llm_arxiv/llm/agent.py", line 124, in chat
+      |     agent = create_tool_calling_agent(self.llm, tools, self.prompt)
+      |                                       ^^^^^^^^
+      | AttributeError: 'ChatPaperAgent' object has no attribute 'llm'
+      +------------------------------------
+
+2025-07-28 20:43:29,542 - agent - INFO - SSE connection established
+2025-07-28 20:43:29,542 - agent - INFO - MCP session created
+2025-07-28 20:43:29,544 - agent - INFO - MCP session initialized
+2025-07-28 20:43:29,546 - agent - INFO - Loaded 4 tools
+2025-07-28 20:43:29,547 - agent - ERROR - Error in chat: unhandled errors in a TaskGroup (1 sub-exception)
+2025-07-28 20:43:29,548 - agent - ERROR - Traceback:   + Exception Group Traceback (most recent call last):
+  |   File "/home/matheus/codigos/projects/llm_arxiv/llm/agent.py", line 111, in chat
+  |     async with sse_client(self.server_url) as (read, write):
+  |                ~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  |   File "/home/matheus/anaconda3/envs/llm_arxiv/lib/python3.13/contextlib.py", line 235, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "/home/matheus/codigos/projects/.venv/lib/python3.13/site-packages/mcp/client/sse.py", line 54, in sse_client
+  |     async with anyio.create_task_group() as tg:
+  |                ~~~~~~~~~~~~~~~~~~~~~~~^^
+  |   File "/home/matheus/codigos/projects/.venv/lib/python3.13/site-packages/anyio/_backends/_asyncio.py", line 772, in __aexit__
+  |     raise BaseExceptionGroup(
+  |         "unhandled errors in a TaskGroup", self._exceptions
+  |     ) from None
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "/home/matheus/codigos/projects/.venv/lib/python3.13/site-packages/mcp/client/sse.py", line 139, in sse_client
+    |     yield read_stream, write_stream
+    |   File "/home/matheus/codigos/projects/llm_arxiv/llm/agent.py", line 114, in chat
+    |     async with ClientSession(read, write) as session:
+    |                ~~~~~~~~~~~~~^^^^^^^^^^^^^
+    |   File "/home/matheus/codigos/projects/.venv/lib/python3.13/site-packages/mcp/shared/session.py", line 218, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/matheus/codigos/projects/.venv/lib/python3.13/site-packages/anyio/_backends/_asyncio.py", line 772, in __aexit__
+    |     raise BaseExceptionGroup(
+    |         "unhandled errors in a TaskGroup", self._exceptions
+    |     ) from None
+    | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+    +-+---------------- 1 ----------------
+      | Traceback (most recent call last):
+      |   File "/home/matheus/codigos/projects/llm_arxiv/llm/agent.py", line 124, in chat
+      |     agent = create_tool_calling_agent(self.llm, tools, self.prompt)
+      |                                       ^^^^^^^^
+      | AttributeError: 'ChatPaperAgent' object has no attribute 'llm'
+      +------------------------------------
+
+2025-07-28 20:46:28,969 - agent - INFO - SSE connection established
+2025-07-28 20:46:28,970 - agent - INFO - MCP session created
+2025-07-28 20:46:28,973 - agent - INFO - MCP session initialized
+2025-07-28 20:46:28,975 - agent - INFO - Loaded 4 tools
+2025-07-28 20:46:28,975 - agent - ERROR - Error in chat: unhandled errors in a TaskGroup (1 sub-exception)
+2025-07-28 20:46:28,976 - agent - ERROR - Traceback:   + Exception Group Traceback (most recent call last):
+  |   File "/home/matheus/codigos/projects/llm_arxiv/llm/agent.py", line 111, in chat
+  |     # Now invoke while connection is active
+  |   File "/home/matheus/anaconda3/envs/llm_arxiv/lib/python3.13/contextlib.py", line 235, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "/home/matheus/codigos/projects/.venv/lib/python3.13/site-packages/mcp/client/sse.py", line 54, in sse_client
+  |     async with anyio.create_task_group() as tg:
+  |                ~~~~~~~~~~~~~~~~~~~~~~~^^
+  |   File "/home/matheus/codigos/projects/.venv/lib/python3.13/site-packages/anyio/_backends/_asyncio.py", line 772, in __aexit__
+  |     raise BaseExceptionGroup(
+  |         "unhandled errors in a TaskGroup", self._exceptions
+  |     ) from None
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "/home/matheus/codigos/projects/.venv/lib/python3.13/site-packages/mcp/client/sse.py", line 139, in sse_client
+    |     yield read_stream, write_stream
+    |   File "/home/matheus/codigos/projects/llm_arxiv/llm/agent.py", line 114, in chat
+    |     'chat_history': chat_history
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/matheus/codigos/projects/.venv/lib/python3.13/site-packages/mcp/shared/session.py", line 218, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/matheus/codigos/projects/.venv/lib/python3.13/site-packages/anyio/_backends/_asyncio.py", line 772, in __aexit__
+    |     raise BaseExceptionGroup(
+    |         "unhandled errors in a TaskGroup", self._exceptions
+    |     ) from None
+    | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+    +-+---------------- 1 ----------------
+      | Traceback (most recent call last):
+      |   File "/home/matheus/codigos/projects/llm_arxiv/llm/agent.py", line 124, in chat
+      |     return {'message': f'Sorry, I encountered an error: {str(e)}', 'success': False}
+      |                                               ^^^^^^^^
+      | AttributeError: 'ChatPaperAgent' object has no attribute 'llm'
+      +------------------------------------
+
+2025-07-28 20:47:19,073 - agent - INFO - SSE connection established
+2025-07-28 20:47:19,073 - agent - INFO - MCP session created
+2025-07-28 20:47:19,076 - agent - INFO - MCP session initialized
+2025-07-28 20:47:19,078 - agent - INFO - Loaded 4 tools
+2025-07-28 20:47:19,079 - agent - ERROR - Error in chat: unhandled errors in a TaskGroup (1 sub-exception)
+2025-07-28 20:47:19,080 - agent - ERROR - Traceback:   + Exception Group Traceback (most recent call last):
+  |   File "/home/matheus/codigos/projects/llm_arxiv/llm/agent.py", line 111, in chat
+  |     self.logger.info("Agent created, invoking...")
+  |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/home/matheus/anaconda3/envs/llm_arxiv/lib/python3.13/contextlib.py", line 235, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "/home/matheus/codigos/projects/.venv/lib/python3.13/site-packages/mcp/client/sse.py", line 54, in sse_client
+  |     async with anyio.create_task_group() as tg:
+  |                ~~~~~~~~~~~~~~~~~~~~~~~^^
+  |   File "/home/matheus/codigos/projects/.venv/lib/python3.13/site-packages/anyio/_backends/_asyncio.py", line 772, in __aexit__
+  |     raise BaseExceptionGroup(
+  |         "unhandled errors in a TaskGroup", self._exceptions
+  |     ) from None
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "/home/matheus/codigos/projects/.venv/lib/python3.13/site-packages/mcp/client/sse.py", line 139, in sse_client
+    |     yield read_stream, write_stream
+    |   File "/home/matheus/codigos/projects/llm_arxiv/llm/agent.py", line 114, in chat
+    |     result = await agent_executor.ainvoke({
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/matheus/codigos/projects/.venv/lib/python3.13/site-packages/mcp/shared/session.py", line 218, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/matheus/codigos/projects/.venv/lib/python3.13/site-packages/anyio/_backends/_asyncio.py", line 772, in __aexit__
+    |     raise BaseExceptionGroup(
+    |         "unhandled errors in a TaskGroup", self._exceptions
+    |     ) from None
+    | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+    +-+---------------- 1 ----------------
+      | Traceback (most recent call last):
+      |   File "/home/matheus/codigos/projects/llm_arxiv/llm/agent.py", line 124, in chat
+      |     import traceback
+      |     
+      | AttributeError: 'ChatPaperAgent' object has no attribute 'llm'
+      +------------------------------------
+
+2025-07-28 20:47:41,882 - agent - INFO - SSE connection established
+2025-07-28 20:47:41,882 - agent - INFO - MCP session created
+2025-07-28 20:47:41,885 - agent - INFO - MCP session initialized
+2025-07-28 20:47:41,888 - agent - INFO - Loaded 4 tools
+2025-07-28 20:47:41,889 - agent - INFO - Agent created, invoking...
+2025-07-28 20:47:46,601 - agent - INFO - Agent invocation successful!
+2025-07-28 20:47:57,102 - agent - INFO - SSE connection established
+2025-07-28 20:47:57,103 - agent - INFO - MCP session created
+2025-07-28 20:47:57,105 - agent - INFO - MCP session initialized
+2025-07-28 20:47:57,107 - agent - INFO - Loaded 4 tools
+2025-07-28 20:47:57,108 - agent - INFO - Agent created, invoking...
+2025-07-28 20:47:58,717 - agent - INFO - Agent invocation successful!
+2025-07-28 20:48:18,837 - agent - INFO - SSE connection established
+2025-07-28 20:48:18,837 - agent - INFO - MCP session created
+2025-07-28 20:48:18,839 - agent - INFO - MCP session initialized
+2025-07-28 20:48:18,841 - agent - INFO - Loaded 4 tools
+2025-07-28 20:48:18,842 - agent - INFO - Agent created, invoking...
+2025-07-28 20:49:28,135 - agent - INFO - Agent invocation successful!
+2025-07-28 20:51:06,736 - agent - INFO - SSE connection established
+2025-07-28 20:51:06,736 - agent - INFO - MCP session created
+2025-07-28 20:51:06,740 - agent - INFO - MCP session initialized
+2025-07-28 20:51:06,742 - agent - INFO - Loaded 4 tools
+2025-07-28 20:51:06,743 - agent - INFO - Agent created, invoking...
+2025-07-28 20:51:11,211 - agent - INFO - Agent invocation successful!

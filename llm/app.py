@@ -1,42 +1,44 @@
 import asyncio
-import gradio as gr
-from agent import initialize_agent
-from typing import List, Tuple, Dict, Any
+import streamlit as st
+from agent import ChatPaperAgent
 
-agent = None
+@st.cache_resource
+def get_agent():
+    return ChatPaperAgent()
 
-async def chat_fn(message: str, history: List[List[str]]) -> gr.ChatMessage:
-    '''Gradio chat function'''
-    if not message.strip():
-        return gr.ChatMessage(role = 'assistant', content = 'No message')
-    
-    try:
-        if agent is None:
-            await initialize_agent()
-        
-        response = await agent.chat(message)
-        
-        message = gr.ChatMessage(role = 'assistant', content = response)
+agent = get_agent()
 
-        return message
-    
-    except Exception as e:
-        error_response = f'Error: {str(e)}'
-        history.append([message, error_response])
-        return gr.ChatMessage(role = 'assistant', content = error_response)
-    
+if 'messages' not in st.session_state:
+    st.session_state['messages'] = []
 
-async def main():
-    global agent
-    agent = await initialize_agent()
-    interface = gr.ChatInterface(
-        fn = chat_fn,
-        type ='messages'
-    )
-    
-    interface.launch(      
-        share = True           
-    )
+for message in st.session_state.messages:
+    with st.chat_message(message['role']):
+        st.markdown(message['content'])
 
-if __name__ == '__main__':
-    asyncio.run(main())
+if prompt:= st.chat_input('Chat with arxiv mcp'):
+    if 'scrape' in prompt:
+        chat_history = []
+    st.session_state.messages.append({'role': 'user', 'content': prompt})
+    with st.chat_message('user'):
+        st.markdown(prompt)
+
+    with st.chat_message('assistant'):
+        with st.spinner('Thinking...', show_time=True):
+            chat_history = []
+            for msg in st.session_state.messages[:-1]:
+                if msg["role"] == "user":
+                    chat_history.append(msg["content"])
+                else:
+                    chat_history.append(msg["content"])
+            response = asyncio.run(
+                    agent.chat(prompt, chat_history)
+            )
+
+            if response['success']:
+                st.markdown(response['message'])
+                st.session_state.messages.append({
+                        "role": "assistant", 
+                        "content": response['message']
+                    })
+            else:
+                st.error(f"Error: {response['message']}")

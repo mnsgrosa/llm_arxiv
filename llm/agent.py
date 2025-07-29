@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import logging
 from typing import List, Tuple, Dict, Any
 
 from langchain_groq import ChatGroq
@@ -37,110 +38,97 @@ class MCPTool(BaseTool):
             raise ToolException(f'MCP tool error: {str(e)}')
 
 class ChatPaperAgent:
-    def __init__(self, mcp_command: List[str] = None):
+    def __init__(self):
         self.groq_api_key = os.getenv('GROQ_API_KEY')
-        self.server_url = 'http://llm_arxiv-mcp-server-1:8000/sse'
+        self.server_url = 'http://localhost:8000/sse/'
         self.mcp_session = None
         self.tools = []
         self.agent_executor = None
-        self.memory = ConversationBufferWindowMemory(
-            memory_key = 'chat_history',
-            return_messages = True,
-            k=10  
+        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
+        
+        self.llm = ChatGroq(
+            groq_api_key=self.groq_api_key,
+            model_name='llama3-8b-8192',
+            temperature=0.3,
+            max_tokens=1024
         )
+        
+        self.prompt = ChatPromptTemplate.from_messages([
+            ('system', '''You are a knowledgeable research assistant that helps users explore and discuss academic papers. 
+
+            Guidelines:
+            1. Be conversational and engaging when discussing papers
+            2. When users ask about papers, scrape or search within your tools
+            3. Summarize key findings in an accessible way
+            4. Ask follow-up questions to help users dive deeper into interesting aspects
+            5. If users ask about specific papers by title, search for them
+            6. Whenever the response contains the title, abstract and link place the name of item alongside
+            7. Whenever you use a tool tell the user something in the lines "searching arxiv about <paper>" or "getting db about <paper>"
+            8. Whenever prompted to get papers don't look at your memory use the tools provided
+
+            Remember: You're having a conversation about research, not just answering isolated questions.'''),
+            ('placeholder', '{chat_history}'),
+            ('human', '{input}'),
+            ('placeholder', '{agent_scratchpad}')
+        ])
+
+
+        if not self.logger.handlers:
+            file_handler = logging.FileHandler('chat_history.log')
+            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            file_handler.setFormatter(formatter)
+            self.logger.addHandler(file_handler)
+
         self.chat_history = []
         self.current_papers = {} 
-        
-    async def initialize(self):
-        '''Initialize MCP connection and create the conversational agent'''
+    
+    async def chat(self, message: str, chat_history:  List[str]) -> Dict[str, Any]:
+        '''Process a chat message and return response'''
+        logging.info('Starting chat')
         try:
             async with sse_client(self.server_url) as (read, write):
+                self.logger.info("SSE connection established")
+                
                 async with ClientSession(read, write) as session:
-                    self.mcp_session = session
+                    self.logger.info("MCP session created")
                     await session.initialize()
+                    self.logger.info("MCP session initialized")
                     
-                    self.tools = await load_mcp_tools(session)
+                    tools = await load_mcp_tools(session)
+                    self.logger.info(f"Loaded {len(tools)} tools")
                     
-                    llm = ChatGroq(
-                        groq_api_key=self.groq_api_key,
-                        model_name='llama3-8b-8192',
-                        temperature=0.3,
-                        max_tokens=1024
-                    )
-                    prompt = ChatPromptTemplate.from_messages([
-                        ('system', '''You are a knowledgeable research assistant that helps users explore and discuss academic papers. 
-
-                        Available tools:
-                        - scrape_arxiv_papers: Get new papers from arXiv on a topic
-                        - search_stored_papers: Search papers already in the database  
-                        - get_or_scrape_papers: Smart search (tries database first, then arXiv)
-                        - list_available_topics: Show what topics are in the database
-
-                        Guidelines:
-                        1. Be conversational and engaging when discussing papers
-                        2. When users ask about papers, first check if you have relevant ones, then search/scrape if needed
-                        3. Summarize key findings in an accessible way
-                        4. Ask follow-up questions to help users dive deeper into interesting aspects
-                        5. Remember previous papers discussed in this conversation
-                        6. If users ask about specific papers by title, search for them
-                        7. Offer to find related papers when appropriate
-                        8. Whenever the response contains the title and abstract place the name of item alongside
-
-                        Remember: You're having a conversation about research, not just answering isolated questions.'''),
-                        ('placeholder', '{chat_history}'),
-                        ('human', '{input}'),
-                        ('placeholder', '{agent_scratchpad}')
-                    ])
-
-                    agent = create_tool_calling_agent(llm, self.tools, prompt)
-                    self.agent_executor = AgentExecutor(
+                    agent = create_tool_calling_agent(self.llm, tools, self.prompt)
+                    agent_executor = AgentExecutor(
                         agent=agent,
-                        tools=self.tools,
+                        tools=tools,
                         verbose=True,
                         handle_parsing_errors=True,
-                        memory=self.memory
+                        max_iterations=3
                     )
                     
+                    self.logger.info("Agent created, invoking...")
+                    
+                    # Now invoke while connection is active
+                    result = await agent_executor.ainvoke({
+                        'input': message,
+                        'chat_history': chat_history
+                    })
+                    
+                    self.logger.info("Agent invocation successful!")
+                    return {'message': result['output'], 'success': True}
+                    
         except Exception as e:
-            print(f"Failed to connect to MCP server at {self.server_url}: {e}")
-            raise
-    
-    async def chat(self, message: str) -> str:
-        '''Process a chat message and return response'''
-        if not self.agent_executor:
-            return 'Agent not initialized. Please restart the interface.'
-        
-        try:
-            context_message = message
-            if self.current_papers:
-                paper_titles = list(self.current_papers.keys())[:3]  
-                context_message += f"\n\n[Context: We've recently discussed these papers: {', '.join(paper_titles)}]"
-            
-            result = await self.agent_executor.ainvoke({
-                'input': context_message,
-                'chat_history': self.memory.chat_memory.messages
-            })
-            
-            response = result['output']
+            self.logger.error(f"Error in chat: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
+            return {'message': f'Sorry, I encountered an error: {str(e)}', 'success': False}
 
-            self.chat_history.append((message, response))
-            
-            return response
-            
-        except Exception as e:
-            return f'Sorry, I encountered an error: {str(e)}'
-    
-    def _extract_papers_from_response(self, response: str):
-        '''Extract paper titles from agent response to maintain context'''
-        if not response:
-            return {}
 
-        response_words = response.split(' ')
-        titles = [title.strip('title:') if 'title' in title else None for title in response_words]
-        abstracts = [abstract.strip('abstract:') if 'abstract' in abstract else None for abstract in response_words]
-        
-        return {'titles': titles, 'abstracts': abstracts}
-        
+    def chat_sync(self, message: str) -> Dict[str, Any]:
+        yield asyncio.run(self.chat(message))
+    
     def get_chat_history(self) -> List[Tuple[str, str]]:
         '''Get formatted chat history for Gradio'''
         return self.chat_history
@@ -149,7 +137,6 @@ class ChatPaperAgent:
         '''Clear chat history'''
         self.chat_history = []
         self.current_papers = {}
-        self.memory.clear()
 
 agent = None
 
@@ -157,14 +144,7 @@ async def initialize_agent(mcp_command: List[str] = None):
     '''Initialize the agent - call this once'''
     global agent
     if agent is None:
-        default_command = ["python", "-m", "your_mcp_server"]
-        if mcp_command:
-            command = mcp_command
-        else:
-            env_command = os.getenv('MCP_SERVER_COMMAND')
-            command = env_command.split() if env_command else default_command
-        
-        agent = ChatPaperAgent(mcp_command=command)  
+        agent = ChatPaperAgent()  
         await agent.initialize()
     return agent
 
